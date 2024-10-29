@@ -94,9 +94,9 @@ def send_Message(username, destination, message):
 def signOn_client(client_socket): 
     try:
         while True: 
-            client_socket.send(msg.MESSAGES["WELCOME_PROMPT"].encode())  
             choice = client_socket.recv(1024).decode()
-
+            choice.strip()
+            
             if choice.upper() == 'S': 
                 name = client_socket.recv(1024).decode()
 
