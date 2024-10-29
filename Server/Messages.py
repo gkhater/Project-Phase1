@@ -12,7 +12,7 @@ MESSAGES = {
     \t{items}
     Online Users: 
     \t{users}
-    Type HELP for help. 
+    Type HELP for help. \n
     ''',
     "HELP_PROMPT": '''Possible commands: 
 LOGOUT: Logs out of your account and ends your session.
@@ -23,18 +23,18 @@ HELPME : lists all available commands.
 BUY [Product_ID]: Buys the product with matching id. 
 ADD [name] [price] [description] : lists the following item up for sale. 
 SOLD : Lists all of the items you've sold. 
-ONLINE: Lists all online users. 
+ONLINE: Lists all online users. \n
 ''',
 
-    "INVALID_ADD" : "Invalid request. Please use ADD [item_name] [price] [description]", 
-    "INVALID_CHECK" : "Inavlid request.  Please use CHECK [username]", 
-    "INVALID_BUY" : "Invalid request. Please use BUY [Product_ID]", 
+    "INVALID_ADD" : "Invalid request. Please use ADD [item_name] [price] [description]\n", 
+    "INVALID_CHECK" : "Inavlid request.  Please use CHECK [username]\n", 
+    "INVALID_BUY" : "Invalid request. Please use BUY [Product_ID]\n", 
     # Text messaging
-    "TEXT_OFFLINE": "Could not send message {destination}, {destination} is offline.",
-    "TEXT_SUCCESS": "Message successfully sent to {destination}!",
+    "TEXT_OFFLINE": "Could not send message {destination}, {destination} is offline.\n",
+    "TEXT_SUCCESS": "Message successfully sent to {destination}!\n",
 
     # Sign-in/Sign-up
-    "ENTER_NAME": "Enter your name: ",
+    "ENTER_NAME": "Enter your name: ", 
     "ENTER_EMAIL": "Enter your email: ",
     "ENTER_USERNAME": "Enter your username: ",
     "ENTER_PASSWORD": "Enter your password: ",
@@ -56,11 +56,11 @@ ONLINE: Lists all online users.
     "USER_DISCONNECTED": "User {username} has disconnected.",
 
     #Products
-    "PRODUCT_NOT_FOUND" : "Error: product not found. Please provide a valid product ID.", 
-    "ITEM_NOT_AVAILABLE" : "Error: '{name}' is no longer available for purchase.", 
-    "SALE_SUCCESS" : "You bought '{name}' for ${price}. \nPlease pick up your purchase from the AUB Post Office in 3 days.", 
-    "NO_SALES" : "You haven't sold any products yet.", 
-    "PRODUCT_ADDED": "Product {product_name} added successfully!", 
+    "PRODUCT_NOT_FOUND" : "Error: product not found. Please provide a valid product ID.\n", 
+    "ITEM_NOT_AVAILABLE" : "Error: '{name}' is no longer available for purchase.\n", 
+    "SALE_SUCCESS" : "You bought '{name}' for ${price}. \nPlease pick up your purchase from the AUB Post Office in 3 days.\n", 
+    "NO_SALES" : "You haven't sold any products yet.\n", 
+    "PRODUCT_ADDED": "Product {product_name} added successfully!\n", 
 
     #User status
     "USER_ONLINE" : "{username} is online \n", 
