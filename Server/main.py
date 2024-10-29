@@ -34,7 +34,6 @@ def handle_client(client_socket, username):
             response = response.split(' ') 
 
             if response[0].upper() == "LOGOUT": 
-                client_socket.send(msg.MESSAGES["LOGOUT"].encode())
                 break
             if response[0].upper() == "TEXT": 
                 destination, message = response[1], " ".join(response[2:])
@@ -78,7 +77,7 @@ def handle_client(client_socket, username):
     finally:
         if username in online_users: 
             del online_users[username] 
-            print(msg.MESSAGES['USER_DISCONNECTED'])
+            print(msg.MESSAGES['USER_DISCONNECTED'].format(username = username))
 
         client_socket.close()
 
@@ -96,7 +95,7 @@ def signOn_client(client_socket):
         while True: 
             choice = client_socket.recv(1024).decode()
             choice.strip()
-            
+
             if choice.upper() == 'S': 
                 name = client_socket.recv(1024).decode()
 

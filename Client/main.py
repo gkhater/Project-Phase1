@@ -17,16 +17,16 @@ def receive_messages(client_socket):
 
 def register(client_socket):
     try:
-        name = input("Enter your name: ")
+        name = input("Enter your name: ").strip()
         client_socket.send(name.encode())  
 
-        email = input("Enter your email: ")
+        email = input("Enter your email: ").strip()
         client_socket.send(email.encode())  
 
-        username = input("Enter your username: ")
+        username = input("Enter your username: ").strip()
         client_socket.send(username.encode())  
 
-        password = input("Enter your password: ")
+        password = input("Enter your password: ").strip()
         client_socket.send(password.encode())  
 
         server_message = client_socket.recv(1024).decode()
@@ -41,10 +41,10 @@ def register(client_socket):
 
 def log_in(client_socket): 
     try:
-        username = input("Enter your username: ")
+        username = input("Enter your username: ").strip()
         client_socket.send(username.encode())  
 
-        password = input("Enter your password: ")
+        password = input("Enter your password: ").strip()
         client_socket.send(password.encode())  
 
         server_message = client_socket.recv(1024).decode()
@@ -60,7 +60,7 @@ def log_in(client_socket):
 def talk_to_server(client_socket): 
     while True: 
         threading.Thread(target=receive_messages, args=(client_socket,), daemon=True).start()
-        user_input = input()
+        user_input = input().strip()
     
         client_socket.send(user_input.encode())
 
@@ -78,8 +78,7 @@ def signOn(domain_name, port):
 
         while True:
 
-            user_input = input("Welcome to AUBoutique! Do you want to: \n\t[S] Sign up\n\t[L] Log in\n>")
-            user_input.strip()
+            user_input = input("Welcome to AUBoutique! Do you want to: \n\t[S] Sign up\n\t[L] Log in\n>").strip()
 
             client_socket.send(user_input.encode())
             done = "False"
@@ -91,7 +90,7 @@ def signOn(domain_name, port):
             else: 
                 server_message = client_socket.recv(1024).decode()
                 print(server_message)
-                
+
             if done == "True": 
                 talk_to_server(client_socket)
                 break

@@ -51,6 +51,7 @@ def add_user(DB, name, email, username, password):
 
 # Authenticate user by checking username and password
 def authenticate(DB, username, password): 
+
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
