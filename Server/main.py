@@ -13,7 +13,7 @@ def get_users():
     return '\n\t'.join(online_users.keys())
 
 def get_products(): 
-    return '\n'.join([f"ID: {product[0]}, Name: {product[1]}, Description: {product[2]}, Price: {product[3]}, Seller: {product[4]}" 
+    return '\n\t'.join([f"ID: {product[0]}, Name: {product[1]}, Description: {product[2]}, Price: {product[3]}, Seller: {product[4]}" 
                       for product in Products.fetch_products(DB)])
 
 def is_online(username): 
