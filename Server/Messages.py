@@ -61,6 +61,9 @@ ONLINE: Lists all online users. \n
     "SALE_SUCCESS" : "You bought '{name}' for ${price}. \nPlease pick up your purchase from the AUB Post Office in 3 days.\n", 
     "NO_SALES" : "You haven't sold any products yet.\n", 
     "PRODUCT_ADDED": "Product {product_name} added successfully!\n", 
+    #Images
+    "IMG_SUCCESS": "Image saved successfully!", 
+    "IMG_ERROR" : "Error sending image {e}", 
 
     #User status
     "USER_ONLINE" : "{username} is online \n", 
