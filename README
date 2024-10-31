@@ -26,4 +26,4 @@ AUBoutique is a basic client-server app that lets users sign up, log in, browse,
 ## Getting Started
 
 1. **Run the Server**: Start the server first by running `Server/main.py`.
-2. **Run the Client**: Connect clients to the server by running `Client/main.py`.
+2. **Run the Client**: Connect clients to the server by running `Client/main.py`. Make sure `port` corresponds to the port you chose while activating the server. 
