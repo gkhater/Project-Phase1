@@ -13,8 +13,8 @@ def create(DB):
             description TEXT NOT NULL,
             price REAL NOT NULL,
             seller TEXT NOT NULL,
-            count INTEGER DEFAULT 1,  -- Initialized to 1
-            buyer TEXT DEFAULT 'N/A',  -- Initialized to 'N/A'
+            count INTEGER DEFAULT 1,  
+            buyer TEXT DEFAULT 'N/A',  
             FOREIGN KEY (seller) REFERENCES users(username)
         )
     ''')
@@ -86,7 +86,8 @@ def add(DB, product_name, username, price, description):
         ''', (product_name, description, price, username))
         conn.commit()
 
-        return msg.MESSAGES['PRODUCT_ADDED'].format(product_name = product_name)
+        ID = cursor.lastrowid
+        return msg.MESSAGES['PRODUCT_ADDED'].format(product_name = product_name), ID
     
     except Exception as e: 
         return f"Error adding product {e}"

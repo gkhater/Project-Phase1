@@ -1,5 +1,6 @@
 import socket
 import threading
+import os
 import Users as users
 import Products as Products
 import Messages as msg
@@ -58,9 +59,24 @@ def handle_client(client_socket, username):
                     client_socket.send(msg.MESSAGES['INVALID_BUY'].encode())
             elif response[0].upper() == "ADD":                 
                 if len(response) > 3: 
-                    name, price, description = response[1].strip(), response[2].strip(), response[3].strip()
-                    result = Products.add(DB, name, username, price, description)
+                    name, price, description = response[1].strip(), response[2].strip() , "".join(response[3:]).strip()
+                    result, ID = Products.add(DB, name, username, price, description)
                     client_socket.send(result.encode())
+                    image_length = int(client_socket.recv(1024).decode())
+                    data = b""
+                    while len(data) < image_length: 
+                        packet = client_socket.recv(1024)
+                        if not packet: 
+                            break 
+                        data += packet
+                    path = f".\Images\ID_{ID}.png"
+                    try: 
+                        with open(path, "wb") as img: 
+                            img.write(data)
+                        client_socket.send(b"Image saved successfully!")
+                    except Exception as e: 
+                        client_socket.send(f"Error sending image {e}".encode())
+                    
                 else: 
                     message = msg.MESSAGES['INVALID_ADD']
                     client_socket.send(message.encode())

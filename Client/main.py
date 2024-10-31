@@ -1,5 +1,7 @@
 import socket
 import threading
+import os 
+import time
 
 #Thread to handle incoming messages asynchronously.
 def receive_messages(client_socket):
@@ -57,14 +59,38 @@ def log_in(client_socket):
         print(f"Error during login: {e}")
         return None
 
+def add_product(client_socket): 
+    time.sleep(0.5)
+    
+    image_path = input("Enter the full path to the image file: ")
+    if not os.path.isfile(image_path): 
+        print("Invalid Image path, will use default image")
+        client_socket.send(f"0".encode())
+        client_socket.send(f"No img data".encode())
+        return 
+    
+    try: 
+        with open(image_path, "rb") as img: 
+            data = img.read()
+        
+        client_socket.send(f"{len(data)}".encode())
+        client_socket.sendall(data)
+    except Exception as e: 
+        print(f"Error sending image {e}")
+        client_socket.send(f"0".encode())
+        client_socket.send(f"No img data".encode())
+        
 def talk_to_server(client_socket): 
     while True: 
         threading.Thread(target=receive_messages, args=(client_socket,), daemon=True).start()
-        user_input = input().strip()
-    
+        user_input = input().strip().upper()
+
         client_socket.send(user_input.encode())
 
-        # End session if user types "LOGOUT"
+        user_split = user_input.split(' ')
+        if(user_split[0] == 'ADD' and len(user_split) > 3): 
+            add_product(client_socket)
+
         if user_input.upper() == "LOGOUT": 
             print("Logging out...")
             break         
