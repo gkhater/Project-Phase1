@@ -73,9 +73,9 @@ def handle_client(client_socket, username):
                     try: 
                         with open(path, "wb") as img: 
                             img.write(data)
-                        client_socket.send(b"Image saved successfully!")
+                        client_socket.send(msg.MESSAGES['IMG_SUCCESS'])
                     except Exception as e: 
-                        client_socket.send(f"Error sending image {e}".encode())
+                        client_socket.send(msg.MESSAGES['IMG_ERROR'].encode())
                     
                 else: 
                     message = msg.MESSAGES['INVALID_ADD']
