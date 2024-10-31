@@ -1,0 +1,29 @@
+# AUBoutique
+
+## Overview
+
+AUBoutique is a basic client-server app that lets users sign up, log in, browse, buy, and sell products. It also allows users to message each other while they’re logged in.
+
+## How It Works
+
+- **Client**: The client app connects to the server, letting users register, log in, view products, and chat with others. 
+- **Server**: The server keeps track of users, products, and messages. It handles user sign-ups, logins, and lets users buy or add products to the marketplace.
+
+## Features
+
+- **User Registration & Login**: New users can sign up, and existing users can log in to access their account.
+- **Product Management**: Users can add items for sale, browse available products, and buy items listed by others.
+- **Messaging**: Users can send messages to other online users.
+
+## Project Files
+
+- **Client/main.py**: The client-side program where users interact with the app.
+- **Server/main.py**: The main server program that manages connections and operations.
+- **Server/Messages.py**: Stores the different messages and prompts displayed to users.
+- **Server/Products.py**: Handles everything related to products (add, buy, view).
+- **Server/Users.py**: Manages user accounts, including registration and login.
+
+## Getting Started
+
+1. **Run the Server**: Start the server first by running `Server/main.py`.
+2. **Run the Client**: Connect clients to the server by running `Client/main.py`.
