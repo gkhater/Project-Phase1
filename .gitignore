@@ -92,9 +92,9 @@ dmypy.json
 # SQL database files
 *.db
 
-#Images 
-.png 
-.jpeg
+#images
+*.png
+*.jpeg
 
 # Local environment variables
 .env.local
