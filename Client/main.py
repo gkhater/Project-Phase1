@@ -83,12 +83,12 @@ def add_product(client_socket):
 def talk_to_server(client_socket): 
     while True: 
         threading.Thread(target=receive_messages, args=(client_socket,), daemon=True).start()
-        user_input = input().strip().upper()
+        user_input = input().strip()
 
         client_socket.send(user_input.encode())
 
         user_split = user_input.split(' ')
-        if(user_split[0] == 'ADD' and len(user_split) > 3): 
+        if(user_split[0].upper() == 'ADD' and len(user_split) > 3): 
             add_product(client_socket)
 
         if user_input.upper() == "LOGOUT": 
