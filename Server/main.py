@@ -10,10 +10,10 @@ DB = 'auboutique.db'
 online_users = {}
 
 def get_users(): 
-    return '\n'.join(online_users.keys())
+    return '\n\t'.join(online_users.keys())
 
 def get_products(): 
-    return '\n'.join([f"ID: {product[0]}, Name: {product[1]}, Description: {product[2]}, Price: {product[3]}, Seller: {product[4]}" 
+    return '\n\t'.join([f"ID: {product[0]}, Name: {product[1]}, Description: {product[2]}, Price: {product[3]}, Seller: {product[4]}" 
                       for product in Products.fetch_products(DB)])
 
 def is_online(username): 
@@ -59,7 +59,7 @@ def handle_client(client_socket, username):
                     client_socket.send(msg.MESSAGES['INVALID_BUY'].encode())
             elif response[0].upper() == "ADD":                 
                 if len(response) > 3: 
-                    name, price, description = response[1].strip(), response[2].strip() , "".join(response[3:]).strip()
+                    name, price, description = response[1].strip(), response[2].strip() , " ".join(response[3:]).strip()
                     result, ID = Products.add(DB, name, username, price, description)
                     client_socket.send(result.encode())
                     image_length = int(client_socket.recv(1024).decode())
