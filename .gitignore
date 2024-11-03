@@ -116,3 +116,7 @@ $RECYCLE.BIN/
 *.swp
 .*.swp
 *.swo
+
+#word docx
+*.docx
+
