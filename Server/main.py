@@ -73,7 +73,7 @@ def handle_client(client_socket, username):
                     try: 
                         with open(path, "wb") as img: 
                             img.write(data)
-                        client_socket.send(msg.MESSAGES['IMG_SUCCESS'])
+                        client_socket.send(msg.MESSAGES['IMG_SUCCESS'].encode())
                     except Exception as e: 
                         client_socket.send(msg.MESSAGES['IMG_ERROR'].encode())
                     
