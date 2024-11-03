@@ -9,9 +9,9 @@ MESSAGES = {
     "LOGOUT": "Logging out...\n",
     "PROMPT_USER": '''What would you like to do?
     Available items: 
-    \t{items}
+    {items}
     Online Users: 
-    \t{users}
+    {users}
     Type HELP for help. \n
     ''',
     "HELP_PROMPT": '''Possible commands: 
