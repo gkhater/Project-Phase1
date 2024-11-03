@@ -93,9 +93,10 @@ def talk_to_server(client_socket):
 
         if user_input.upper() == "LOGOUT": 
             print("Logging out...")
+            messages.join() 
             break   
 
-        messages.join()      
+             
 
 def signOn(domain_name, port): 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
