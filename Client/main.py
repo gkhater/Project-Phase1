@@ -82,7 +82,7 @@ def add_product(client_socket):
         
 def talk_to_server(client_socket): 
     while True: 
-        threading.Thread(target=receive_messages, args=(client_socket,), daemon=True).start()
+        messages = threading.Thread(target=receive_messages, args=(client_socket,), daemon=True).start()
         user_input = input().strip()
 
         client_socket.send(user_input.encode())
@@ -93,7 +93,9 @@ def talk_to_server(client_socket):
 
         if user_input.upper() == "LOGOUT": 
             print("Logging out...")
-            break         
+            break   
+
+        messages.join()      
 
 def signOn(domain_name, port): 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -134,3 +136,4 @@ if __name__ == "__main__":
     domain_name = 'localhost'
     port = 5001
     signOn(domain_name, port)
+    
