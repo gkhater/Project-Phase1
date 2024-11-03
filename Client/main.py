@@ -82,7 +82,9 @@ def add_product(client_socket):
         
 def talk_to_server(client_socket): 
     while True: 
-        messages = threading.Thread(target=receive_messages, args=(client_socket,), daemon=True).start()
+        messages = threading.Thread(target=receive_messages, args=(client_socket,), daemon=True)
+        messages.start()
+        
         user_input = input().strip()
 
         client_socket.send(user_input.encode())
