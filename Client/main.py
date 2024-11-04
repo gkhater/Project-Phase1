@@ -11,7 +11,6 @@ def receive_messages(client_socket):
             if server_message:
                 print(f"\n[Server]: {server_message} \n>", end = "")  
             else:
-                print("\nConnection closed by server.")
                 break
         except Exception as e:
             print(f"\nError receiving message: {e}")
