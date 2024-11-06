@@ -12,7 +12,7 @@ MESSAGES = {
     {items}
     Online Users: 
     {users}
-    Type HELP for help. \n
+    Type HELPME for help. \n
     ''',
     "HELP_PROMPT": '''Possible commands: 
 LOGOUT: Logs out of your account and ends your session.
