@@ -67,5 +67,23 @@ ONLINE: Lists all online users. \n
 
     #User status
     "USER_ONLINE" : "{username} is online \n", 
-    "USER_OFFLINE": "{username} is offline \n"
+    "USER_OFFLINE": "{username} is offline \n", 
+
+    #P2P messaging
+    "P2P_PROMPT": "Initiating peer-to-peer chat with {username}...",
+    "P2P_FAILURE": "Failed to establish a peer-to-peer connection with {username}.",
+    "P2P_DISCONNECT": "Peer {username} has disconnected from the chat.",
+
+    #Products rating
+    "RATING_SUCCESS": "You rated '{name}' with {rating} stars.\n",
+    "INVALID_RATING": "Invalid rating. Please enter a number between 1 and 5.\n",
+    "VIEW_RATINGS": "Average rating for '{name}': {average}/5 based on {count} reviews.\n",
+
+    #Currency Conversion
+    "CURRENCY_CONVERTED": "Price converted to {currency}: {price}.",
+    "CURRENCY_ERROR": "Failed to fetch exchange rates. Defaulting to USD.",
+
+    #Optional features
+    "NOTIFY_NEW_PRODUCT": "New product '{name}' added by {owner}!",
+    "MEDIA_UNSUPPORTED": "Media type not supported. Only {types} are allowed.",
 }
