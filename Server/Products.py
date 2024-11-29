@@ -74,16 +74,16 @@ def view_sold(DB, seller_username):
     finally:
         conn.close()
 
-def add(DB, product_name, username, price, description): 
+def add(DB, product_name, username, price, description, count = 1): 
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     cursor.execute("PRAGMA foreign_keys = ON")
     
     try: 
         cursor.execute('''
-            INSERT INTO products (name, description, price, seller)
-            VALUES (?, ?, ?, ?)
-        ''', (product_name, description, price, username))
+            INSERT INTO products (name, description, price, seller, count)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (product_name, description, price, username, count))
         conn.commit()
 
         ID = cursor.lastrowid
