@@ -21,81 +21,142 @@ def is_online(username):
         return msg.MESSAGES['USER_ONLINE'].format(username=username)
     return msg.MESSAGES['USER_OFFLINE'].format(username=username)
 
-def handle_client(client_socket, username):
+def handle_logout(client_socket, username):
+    del online_users[username]
+    print(msg.MESSAGES['USER_DISCONNECTED'].format(username=username))
+    client_socket.close()
 
+def handle_text(client_socket, username, response):
+    if len(response) > 2:
+        destination, message = response[1], " ".join(response[2:])
+        result = send_Message(username, destination, message)
+        client_socket.send(result.encode())
+    else:
+        client_socket.send("Invalid TEXT command. Use TEXT [username] [message].".encode())
+
+def handle_help(client_socket):
+    client_socket.send(msg.MESSAGES["HELP_PROMPT"].encode())
+
+def handle_check(client_socket, response):
+    if len(response) > 1:
+        ans = is_online(response[1])
+        client_socket.send(ans.encode())
+    else:
+        client_socket.send(msg.MESSAGES['INVALID_CHECK'].encode())
+
+def handle_products(client_socket):
+    products = "Available products: \n" + get_products()
+    client_socket.send(products.encode())
+
+def handle_buy(client_socket, username, response):
+    if len(response) > 1:
+        product_id = response[1].strip()
+        result = Products.buy(DB, product_id, username)
+        client_socket.send(result.encode())
+    else:
+        client_socket.send(msg.MESSAGES['INVALID_BUY'].encode())
+
+def handle_add(client_socket, username, response):
+    if len(response) > 3:
+        name, price, description = response[1].strip(), response[2].strip(), " ".join(response[3:]).strip()
+        result, ID = Products.add(DB, name, username, price, description)
+        client_socket.send(result.encode())
+
+        # Handle image upload
+        image_length = int(client_socket.recv(1024).decode())
+        data = b""
+        while len(data) < image_length:
+            packet = client_socket.recv(1024)
+            if not packet:
+                break
+            data += packet
+        path = os.path.join("Images", f"ID_{ID}.png")
+        try:
+            with open(path, "wb") as img:
+                img.write(data)
+            client_socket.send(msg.MESSAGES['IMG_SUCCESS'].encode())
+        except Exception as e:
+            client_socket.send(msg.MESSAGES['IMG_ERROR'].encode())
+    else:
+        client_socket.send(msg.MESSAGES['INVALID_ADD'].encode())
+
+def handle_sold(client_socket, username):
+    result = Products.view_sold(DB, username)
+    client_socket.send(result.encode())
+
+def handle_online(client_socket):
+    users_list = get_users()
+    message = f"Online users: \n{users_list}"
+    client_socket.send(message.encode())
+
+def handle_rate(client_socket, response):
+    if len(response) > 2:
+        product_id, rating = response[1], int(response[2])
+        if 1 <= rating <= 5:
+            result = Products.rate_product(DB, product_id, rating)
+            client_socket.send(result.encode())
+        else:
+            client_socket.send("Rating must be between 1 and 5.".encode())
+    else:
+        client_socket.send("Invalid RATE command. Use RATE [product_id] [rating].".encode())
+
+def handle_search(client_socket, response):
+    if len(response) > 1:
+        query = " ".join(response[1:])
+        results = Products.search_products(DB, query)
+        if isinstance(results, list):
+            message = "Search Results:\n" + "\n".join(
+                [f"ID: {r[0]}, Name: {r[1]}, Price: {r[3]}, Seller: {r[4]}" for r in results]
+            )
+            client_socket.send(message.encode())
+        else:
+            client_socket.send(results.encode())
+    else:
+        client_socket.send("Invalid SEARCH command. Use SEARCH [query].".encode())
+
+def handle_unknown(client_socket):
+    client_socket.send(msg.MESSAGES["UNKNOWN_COMMAND"].encode())
+
+def handle_command(client_socket, username, response):
+    command = response[0].upper()
+    if command == "LOGOUT":
+        return "LOGOUT"
+    elif command == "TEXT":
+        handle_text(client_socket, username, response)
+    elif command == "HELPME":
+        handle_help(client_socket)
+    elif command == "CHECK":
+        handle_check(client_socket, response)
+    elif command == "PRODUCTS":
+        handle_products(client_socket)
+    elif command == "BUY":
+        handle_buy(client_socket, username, response)
+    elif command == "ADD":
+        handle_add(client_socket, username, response)
+    elif command == "SOLD":
+        handle_sold(client_socket, username)
+    elif command == "ONLINE":
+        handle_online(client_socket)
+    elif command == "RATE":
+        handle_rate(client_socket, response)
+    elif command == "SEARCH":
+        handle_search(client_socket, response)
+    else:
+        handle_unknown(client_socket)
+
+def handle_client(client_socket, username):
+    # Send initial prompt
     products = get_products()
     users_list = get_users()
-
-    # Format prompt message
     client_socket.send((msg.MESSAGES['PROMPT_USER'].format(items=products, users=users_list)).encode())
 
     try:
-        while True: 
-            response = client_socket.recv(1024).decode()
-            response = response.split(' ') 
-
-            if response[0].upper() == "LOGOUT": 
+        while True:
+            response = client_socket.recv(1024).decode().split(' ')
+            if handle_command(client_socket, username, response) == "LOGOUT":
                 break
-            if response[0].upper() == "TEXT": 
-                destination, message = response[1], " ".join(response[2:])
-                client_socket.send(send_Message(username, destination, message).encode())
-            elif response[0].upper() == "HELPME": 
-                client_socket.send(msg.MESSAGES["HELP_PROMPT"].encode())
-            elif response[0].upper() == "CHECK":
-                if len(response) > 1:  
-                    ans = is_online(response[1])
-                    client_socket.send(ans.encode())
-                else:
-                    client_socket.send(msg.MESSAGES['INVALID_CHECK'].encode())
-            elif response[0].upper() == "PRODUCTS": 
-                products = "Available products: \n" + get_products()
-                client_socket.send(products.encode())
-            elif response[0].upper() == "BUY":
-                if len(response) > 1:
-                    product_id = response[1].strip()  
-                    result = Products.buy(DB, product_id, username)  
-                    client_socket.send(result.encode())
-                else:
-                    client_socket.send(msg.MESSAGES['INVALID_BUY'].encode())
-            elif response[0].upper() == "ADD":                 
-                if len(response) > 3: 
-                    name, price, description = response[1].strip(), response[2].strip() , " ".join(response[3:]).strip()
-                    result, ID = Products.add(DB, name, username, price, description)
-                    client_socket.send(result.encode())
-                    image_length = int(client_socket.recv(1024).decode())
-                    data = b""
-                    while len(data) < image_length: 
-                        packet = client_socket.recv(1024)
-                        if not packet: 
-                            break 
-                        data += packet
-                    path = f".\Images\ID_{ID}.png"
-                    try: 
-                        with open(path, "wb") as img: 
-                            img.write(data)
-                        client_socket.send(msg.MESSAGES['IMG_SUCCESS'].encode())
-                    except Exception as e: 
-                        client_socket.send(msg.MESSAGES['IMG_ERROR'].encode())
-                    
-                else: 
-                    message = msg.MESSAGES['INVALID_ADD']
-                    client_socket.send(message.encode())
-            elif response[0].upper() == "SOLD": 
-                result = Products.view_sold(DB, username)
-                client_socket.send(result.encode())
-            elif response[0].upper() == "ONLINE": 
-                users_list = get_users()
-                message = f'''Online users: \n {users_list}'''
-                client_socket.send(message.encode())
-            else: 
-                client_socket.send(msg.MESSAGES["UNKNOWN_COMMAND"].encode())
-    
     finally:
-        if username in online_users: 
-            del online_users[username] 
-            print(msg.MESSAGES['USER_DISCONNECTED'].format(username = username))
-
-        client_socket.close()
+        handle_logout(client_socket, username)
 
 def send_Message(username, destination, message): 
     if destination not in online_users: 
