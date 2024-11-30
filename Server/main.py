@@ -22,15 +22,19 @@ def is_online(username):
     return msg.MESSAGES['USER_OFFLINE'].format(username=username)
 
 def handle_logout(client_socket, username):
-    del online_users[username]
+    if username in online_users and online_users[username]["socket"] == client_socket: 
+        del online_users[username]
     print(msg.MESSAGES['USER_DISCONNECTED'].format(username=username))
     client_socket.close()
 
 def handle_text(client_socket, username, response):
-    if len(response) > 2:
-        destination, message = response[1], " ".join(response[2:])
-        result = send_Message(username, destination, message)
-        client_socket.send(result.encode())
+    if len(response) > 1:
+        destination= response[1]
+        peer_address = get_peer_address(destination)
+        if peer_address: 
+            client_socket.send(f"PEER {peer_address[0]} {peer_address[1]} {username}".encode())
+        else: 
+            client_socket.send(f"{destination} is offline.".encode())
     else:
         client_socket.send("Invalid TEXT command. Use TEXT [username] [message].".encode())
 
@@ -162,12 +166,17 @@ def send_Message(username, destination, message):
     if destination not in online_users: 
         return msg.MESSAGES["TEXT_OFFLINE"].format(destination=destination)
     
-    destination_socket = online_users[destination]
+    destination_socket  = online_users[destination]
     message = f"[From {username}] {message}"
     destination_socket.send(message.encode())
     return msg.MESSAGES["TEXT_SUCCESS"].format(destination=destination)
 
-def signOn_client(client_socket): 
+def get_peer_address(username): 
+    if username in online_users: 
+        return online_users[username]["address"]
+    return None
+
+def signOn_client(client_socket, client_address): 
     try:
         while True: 
             choice = client_socket.recv(1024).decode()
@@ -182,26 +191,36 @@ def signOn_client(client_socket):
 
                 password = client_socket.recv(1024).decode()
 
+                p2p_port = client_socket.recv(1024).decode()
+
                 done, result= users.add_user(DB, name, email, username, password)
                 client_socket.send(result.encode())
                 client_socket.send(done.encode())
 
                 if done == "True": 
-                    online_users[username] = client_socket
+                    online_users[username] = {
+                        "socket" : client_socket, 
+                        "address": (client_address[0], p2p_port) #(IP, port)
+                    }
                     handle_client(client_socket, username)
                     break
-
+                
             elif choice.upper() == 'L': 
                 username = client_socket.recv(1024).decode()
 
                 password = client_socket.recv(1024).decode()
+
+                p2p_port = client_socket.recv(1024).decode()
 
                 done, result = users.authenticate(DB, username, password)
                 client_socket.send(result.encode())
                 client_socket.send(done.encode())
 
                 if done == "True": 
-                    online_users[username] = client_socket
+                    online_users[username] = {
+                        "socket" : client_socket, 
+                        "address": (client_address[0], p2p_port) #(IP, port)
+                    }
                     handle_client(client_socket, username)
                     break
 
@@ -224,9 +243,8 @@ def start(port):
         client_socket, addr = server.accept()
         print(f"Connection established with {addr}")
 
-        handler = threading.Thread(target=signOn_client, args=(client_socket,))
+        handler = threading.Thread(target=signOn_client, args=(client_socket, addr,))
         handler.start()
-
 
 if __name__ == '__main__':
     users.create(DB)
