@@ -1,6 +1,8 @@
 import sqlite3
 import string
 import Messages as msg
+import bcrypt 
+import re
 
 # ASCII upper and lower + '_@$&'
 valid = list(string.ascii_letters + string.digits)
@@ -16,7 +18,7 @@ def create(DB):
             name TEXT NOT NULL, 
             email TEXT NOT NULL, 
             username TEXT PRIMARY KEY, 
-            password TEXT NOT NULL          
+            password TEXT NOT NULL
         )
     ''')
 
@@ -34,11 +36,14 @@ def add_user(DB, name, email, username, password):
         if character not in valid: 
             return False, msg.MESSAGES["INVALID_USERNAME"]
     
+    if not validate_email(email):
+        return "False", "Invalid email format."
+
     try: 
+        hashed_password = hash_password(password)
         cursor.execute('''
             INSERT INTO users (name, email, username, password)
-            VALUES (?,?,?,?)
-        ''', (name, email, username, password))
+            VALUES (?,?,?,?)''', (name, email, username, hashed_password))
         
         conn.commit()
         return "True", msg.MESSAGES["USER_ADDED_SUCCESS"].format(username=username)
@@ -63,10 +68,49 @@ def authenticate(DB, username, password):
 
         if result: 
             name, key = result
-            if key == password: 
+            if verify_password(key, password):
                 return "True", msg.MESSAGES["WELCOME_CLIENT"].format(user=name)
-        
+
         return "False", msg.MESSAGES["AUTH_FAILED"]
 
     finally: 
+        conn.close()
+
+#These two are self explainatory
+#Uses bcrypt to encrypt passwords
+def hash_password(password): 
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(stored_pass, given_pass): 
+    return bcrypt.checkpw(given_pass.encode('utf-8'), stored_pass.encode('utf-8'))
+
+#validates email format using regex
+#I just wanted to flex my newly acquired regex knowledge
+def validate_email(email): 
+    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(regex, email) is not None
+
+def search_user(DB, query): 
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    try:
+        query = f"%{query}%"
+        cursor.execute('SELECT username, email FROM users WHERE username LIKE ? OR email LIKE ?', (query, query))
+        results = cursor.fetchall()
+        if results:
+            return [{"username": row[0], "email": row[1]} for row in results]
+        return "No users found."
+    finally:
+        conn.close()
+
+def delete_user(DB, username):
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('DELETE FROM users WHERE username = ?', (username,))
+        conn.commit()
+        return f"User '{username}' deleted successfully."
+    except Exception as e:
+        return f"Error deleting user: {e}"
+    finally:
         conn.close()
