@@ -25,6 +25,22 @@ def create(DB):
     conn.commit()
     conn.close()
 
+def get_seller(DB, product_id): 
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT seller FROM products WHERE id = ?", (product_id,))
+        result = cursor.fetchone()
+
+        if result: 
+            return result[0]
+        else: 
+            return f"Product with ID {product_id} not found."
+        
+    finally: 
+        conn.close()
+
 def buy(DB, product_id, username): 
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
@@ -38,11 +54,14 @@ def buy(DB, product_id, username):
         if product:
             name, price, count = product
 
-            if count > 0:
+            if count < 0:
                 return msg.MESSAGES['ITEM_NOT_AVAILABLE'].format(name=name)
             if price > Users.get_balance(DB, username): 
                 return f"Insufficient funds!"
             
+            Users.deposit(DB, username, -price)
+            seller = get_seller(DB, product_id)
+            Users.deposit(DB, seller, price)
             newcount = count - 1
             cursor.execute("UPDATE products SET count = ?, buyer = ? WHERE id = ?", (newcount, username, product_id))
             conn.commit()

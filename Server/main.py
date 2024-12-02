@@ -128,7 +128,7 @@ def handle_deposit(client_socket, username,response):
 
 
 def handle_balance(client_socket, username): 
-    answer = str(users.get_balance(DB, username) + '\n')
+    answer = str(users.get_balance(DB, username)) + '\n'
     client_socket.send(answer.encode())
 
 def handle_unknown(client_socket):

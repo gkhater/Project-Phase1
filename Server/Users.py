@@ -78,8 +78,6 @@ def authenticate(DB, username, password):
         conn.close()
 
 def deposit(DB, username, amount): 
-    if amount < 0: 
-        return "Deposit amount must greater than 0."
     
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
