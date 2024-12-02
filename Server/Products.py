@@ -1,5 +1,6 @@
 import sqlite3
 import Messages as msg
+import Users 
 
 def create(DB): 
     conn = sqlite3.connect(DB)
@@ -38,13 +39,16 @@ def buy(DB, product_id, username):
             name, price, count = product
 
             if count > 0:
-                newcount = count - 1
-                cursor.execute("UPDATE products SET count = ?, buyer = ? WHERE id = ?", (newcount, username, product_id))
-                conn.commit()
-
-                return msg.MESSAGES['SALE_SUCCESS'].format(name=name, price=price)
-            else:
                 return msg.MESSAGES['ITEM_NOT_AVAILABLE'].format(name=name)
+            if price > Users.get_balance(DB, username): 
+                return f"Insufficient funds!"
+            
+            newcount = count - 1
+            cursor.execute("UPDATE products SET count = ?, buyer = ? WHERE id = ?", (newcount, username, product_id))
+            conn.commit()
+
+            return msg.MESSAGES['SALE_SUCCESS'].format(name=name, price=price)                
+            
         else: 
             return msg.MESSAGES['PRODUCT_NOT_FOUND']
         

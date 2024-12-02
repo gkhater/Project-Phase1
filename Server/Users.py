@@ -77,6 +77,43 @@ def authenticate(DB, username, password):
     finally: 
         conn.close()
 
+def deposit(DB, username, amount): 
+    if amount < 0: 
+        return "Deposit amount must greater than 0."
+    
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    try: 
+        cursor.execute("SELECT balance FROM users WHERE username = ?", (username,))
+        result = cursor.fetchone()
+
+        if result: 
+            current_balance = result[0]
+            new_balance = current_balance + amount
+            cursor.execute("UPDATE users SET balance = ? WHERE username = ?", (new_balance, username))
+            conn.commit()
+            return f"Deposit successful. New balance for {username} is {new_balance}."
+        else:
+            return f"User with username '{username}' not found."
+    finally: 
+        conn.close()
+        
+def get_balance(DB, username): 
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    try: 
+        cursor.execute("SELECT balance FROM users WHERE username = ? ", (username,))
+        result = cursor.fetchone()
+
+        if result: 
+            return result[0]
+        else: 
+            return f"User with '{username}' not found."
+    finally: 
+        conn.close()
+
 #These two are self explainatory
 #Uses bcrypt to encrypt passwords
 def hash_password(password): 
