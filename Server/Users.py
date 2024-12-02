@@ -108,7 +108,7 @@ def get_balance(DB, username):
         result = cursor.fetchone()
 
         if result: 
-            return result
+            return result[0]
         else: 
             return f"User with '{username}' not found."
     finally: 
