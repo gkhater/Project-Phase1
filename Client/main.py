@@ -147,6 +147,7 @@ def signOn(domain_name, tcp_port, p2p_port):
             user_input = input("Welcome to AUBoutique! Do you want to: \n\t[S] Sign up\n\t[L] Log in\n>").strip()
             tcp_socket.send(user_input.encode())
 
+            done = None
             if user_input.upper() == 'S':
                 done = register(tcp_socket, p2p_port)
             elif user_input.upper() == 'L':
@@ -155,7 +156,7 @@ def signOn(domain_name, tcp_port, p2p_port):
                 server_message = tcp_socket.recv(1024).decode()
                 print(server_message)
 
-            if done == "True":
+            if "True" in done:
                 talk_to_server(tcp_socket, p2p_port)
                 break
             if user_input.upper() == 'LOGOUT':
