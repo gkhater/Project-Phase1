@@ -62,8 +62,8 @@ def handle_buy(client_socket, username, response):
 
 def handle_add(client_socket, username, response):
     if len(response) > 3:
-        name, price, description = response[1].strip(), response[2].strip(), " ".join(response[3:]).strip()
-        result, ID = Products.add(DB, name, username, price, description)
+        count, name, price, description = response[1].strip(), response[2].strip(), response[3].strip(), " ".join(response[3:]).strip()
+        result, ID = Products.add(DB, name, username, price, description, count=count)
         client_socket.send(result.encode())
 
         # Handle image upload
