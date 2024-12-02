@@ -13,7 +13,7 @@ def get_users():
     return '\n\t'.join(online_users.keys())
 
 def get_products(): 
-    return '\n\t'.join([f"ID: {product[0]}, Name: {product[1]}, Description: {product[2]}, Price: {product[3]}, Seller: {product[4]}" 
+    return '\n\t'.join([f"ID: {product[0]}, Name: {product[1]}, Count: {product[2]}, Description: {product[3]}, Price: {product[4]}, Seller: {product[5]}, Rating: {product[5]} ({product[6]} reviews)" 
                       for product in Products.fetch_products(DB)])
 
 def is_online(username): 
@@ -66,7 +66,6 @@ def handle_add(client_socket, username, response):
         result, ID = Products.add(DB, name, username, price, description, count=count)
         client_socket.send(result.encode())
 
-        # Handle image upload
         image_length = int(client_socket.recv(1024).decode())
         data = b""
         while len(data) < image_length:
@@ -221,6 +220,7 @@ def signOn_client(client_socket, client_address):
                         "socket" : client_socket, 
                         "address": (client_address[0], p2p_port) #(IP, port)
                     }
+                    
                     handle_client(client_socket, username)
                     break
 

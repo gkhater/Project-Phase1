@@ -178,7 +178,7 @@ def fetch_products(DB):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
-    cursor.execute('SELECT id, name, description, price, seller, rating, rating_count FROM products WHERE count > 0')
+    cursor.execute('SELECT id, name, count, description, price, seller, rating, rating_count FROM products WHERE count > 0')
     products = cursor.fetchall()
 
     conn.close()

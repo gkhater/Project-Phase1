@@ -1,6 +1,7 @@
 import socket
 import threading
 import os
+import time
 
 # Thread to handle incoming P2P messages
 def listen_for_p2p(p2p_socket):
@@ -109,6 +110,27 @@ def handle_text(tcp_socket, user_split):
         else:
             print(response)  # Handle offline or invalid user cases
 
+def add_product(client_socket): 
+    time.sleep(0.5)
+
+    image_path = input("Enter the full path to the image file: ")
+    if not os.path.isfile(image_path): 
+        print("Invalid Image path, will use default image")
+        client_socket.send(f"0".encode())
+        client_socket.send(f"No img data".encode())
+        return 
+
+    try: 
+        with open(image_path, "rb") as img: 
+            data = img.read()
+
+        client_socket.send(f"{len(data)}".encode())
+        client_socket.sendall(data)
+    except Exception as e: 
+        print(f"Error sending image {e}")
+        client_socket.send(f"0".encode())
+        client_socket.send(f"No img data".encode())
+
 # Main server interaction loop
 def talk_to_server(tcp_socket, p2p_port):
     messages = threading.Thread(target=receive_messages, args=(tcp_socket,), daemon=True)
@@ -120,7 +142,9 @@ def talk_to_server(tcp_socket, p2p_port):
         tcp_socket.send(user_input.encode())
 
         user_split = user_input.split(' ')
-        if user_split[0].upper() == 'TEXT':
+        if user_split[0].upper() == 'ADD' and len(user_split) > 3:
+            add_product(tcp_socket) 
+        elif user_split[0].upper() == 'TEXT':
             handle_text(tcp_socket, user_split)
 
         elif user_input.upper() == "LOGOUT":
