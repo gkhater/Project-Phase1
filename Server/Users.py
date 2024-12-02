@@ -98,9 +98,9 @@ def deposit(DB, username, amount):
             return f"User with username '{username}' not found."
     finally: 
         conn.close()
-        
+
 def get_balance(DB, username): 
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
     try: 
@@ -108,7 +108,7 @@ def get_balance(DB, username):
         result = cursor.fetchone()
 
         if result: 
-            return result[0]
+            return result
         else: 
             return f"User with '{username}' not found."
     finally: 

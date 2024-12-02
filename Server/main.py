@@ -118,20 +118,22 @@ def handle_search(client_socket, response):
         client_socket.send("Invalid SEARCH command. Use SEARCH [query].".encode())
 
 def handle_deposit(client_socket, username,response): 
-    if len(response) > 1: 
+    if len(response) > 2: 
         amount = response[1]
         answer = users.deposit(DB, username, int(amount))
     else: 
-        answer = f"Invalid syntax, Please use \nDEPOSIT {amount}\n"
+        answer = f"Invalid syntax, Please use: DEPOSIT {amount}\n"
     
+    client_socket.send(answer.encode())
+
+
+def handle_balance(client_socket, username): 
+    answer = users.get_balance(DB, username)
     client_socket.send(answer.encode())
 
 def handle_unknown(client_socket):
     client_socket.send(msg.MESSAGES["UNKNOWN_COMMAND"].encode())
 
-def handle_balance(client_socket, username): 
-    answer = users.get_balance(DB, username)
-    client_socket.send(answer.encode())
 
 def handle_command(client_socket, username, response):
     command = response[0].upper()
