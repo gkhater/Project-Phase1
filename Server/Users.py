@@ -18,7 +18,8 @@ def create(DB):
             name TEXT NOT NULL, 
             email TEXT NOT NULL, 
             username TEXT PRIMARY KEY, 
-            password TEXT NOT NULL
+            password TEXT NOT NULL, 
+            balance INTEGER DEFAULT 0
         )
     ''')
 
