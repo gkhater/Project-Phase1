@@ -3,6 +3,7 @@ import string
 import Messages as msg
 import bcrypt 
 import re
+from Rates import convert
 
 # ASCII upper and lower + '_@$&'
 valid = list(string.ascii_letters + string.digits)
@@ -19,7 +20,8 @@ def create(DB):
             email TEXT NOT NULL, 
             username TEXT PRIMARY KEY, 
             password TEXT NOT NULL, 
-            balance INTEGER DEFAULT 0
+            balance INTEGER DEFAULT 0, 
+            currency TEXT DEFAULT USD
         )
     ''')
 
@@ -83,15 +85,15 @@ def deposit(DB, username, amount):
     cursor = conn.cursor()
 
     try: 
-        cursor.execute("SELECT balance FROM users WHERE username = ?", (username,))
+        cursor.execute("SELECT balance, currency FROM users WHERE username = ?", (username,))
         result = cursor.fetchone()
 
         if result: 
-            current_balance = result[0]
-            new_balance = current_balance + amount
+            current_balance, currency = result[0], result[1]
+            new_balance = current_balance + amount * convert(currency, 'USD')
             cursor.execute("UPDATE users SET balance = ? WHERE username = ?", (new_balance, username))
             conn.commit()
-            return f"Deposit successful. New balance for {username} is {new_balance}."
+            return f"Deposit successful. New balance for {username} is {new_balance * convert('USD', currency)}."
         else:
             return f"User with username '{username}' not found."
     finally: 
@@ -102,14 +104,53 @@ def get_balance(DB, username):
     cursor = conn.cursor()
 
     try: 
-        cursor.execute("SELECT balance FROM users WHERE username = ? ", (username,))
+        cursor.execute("SELECT balance, currency FROM users WHERE username = ? ", (username,))
+        result = cursor.fetchone()
+
+        if result: 
+            return result[0] * convert('USD',result[1])
+        else: 
+            return f"User with '{username}' not found."
+    finally: 
+        conn.close()
+
+def get_currency(DB, username): 
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    try: 
+        cursor.execute("SELECT currency FROM users WHERE username = ? ", (username,))
         result = cursor.fetchone()
 
         if result: 
             return result[0]
         else: 
-            return f"User with '{username}' not found."
+            return f"User with {username} not found"
     finally: 
+        conn.close()
+
+def set_currency(DB, username, new_currency):
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    try:
+        # Validate the new currency (assuming a list of valid currency codes)
+        valid_currencies = ["USD", "EUR", "GBP", "JPY", "AUD"]  # Add more as needed
+        if new_currency not in valid_currencies:
+            return f"Invalid currency '{new_currency}'. Valid options are: {', '.join(valid_currencies)}."
+
+        # Check if user exists
+        cursor.execute("SELECT username FROM users WHERE username = ?", (username,))
+        if not cursor.fetchone():
+            return f"User with username '{username}' not found."
+
+        # Update the currency
+        cursor.execute("UPDATE users SET currency = ? WHERE username = ?", (new_currency, username))
+        conn.commit()
+        return f"Currency for user '{username}' successfully updated to '{new_currency}'."
+    except Exception as e:
+        return f"Error updating currency: {e}"
+    finally:
         conn.close()
 
 #These two are self explainatory

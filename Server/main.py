@@ -4,6 +4,7 @@ import os
 import Users as users
 import Products as Products
 import Messages as msg
+from Rates import convert
 
 DB = 'auboutique.db'
 
@@ -12,8 +13,9 @@ online_users = {}
 def get_users(): 
     return '\n\t'.join(online_users.keys())
 
-def get_products(): 
-    return '\n\t'.join([f"ID: {product[0]}, Name: {product[1]}, Count: {product[2]}, Description: {product[3]}, Price: {product[4]}, Seller: {product[5]}, Rating: {product[5]} ({product[6]} reviews)" 
+def get_products(username): 
+    currency = users.get_currency(DB, username)
+    return '\n\t'.join([f"ID: {product[0]}, Name: {product[1]}, Count: {product[2]}, Description: {product[3]}, Price: {product[4] * convert('USD', currency)}, Seller: {product[5]}, Rating: {product[5]} ({product[6]} reviews)" 
                       for product in Products.fetch_products(DB)])
 
 def is_online(username): 
@@ -48,8 +50,8 @@ def handle_check(client_socket, response):
     else:
         client_socket.send(msg.MESSAGES['INVALID_CHECK'].encode())
 
-def handle_products(client_socket):
-    products = "Available products: \n" + get_products()
+def handle_products(client_socket, username):
+    products = "Available products: \n" + get_products(username)
     client_socket.send(products.encode())
 
 def handle_buy(client_socket, username, response):
@@ -118,11 +120,11 @@ def handle_search(client_socket, response):
         client_socket.send("Invalid SEARCH command. Use SEARCH [query].".encode())
 
 def handle_deposit(client_socket, username,response): 
-    if len(response) > 2: 
+    if len(response) > 1: 
         amount = response[1]
         answer = users.deposit(DB, username, int(amount))
     else: 
-        answer = f"Invalid syntax, Please use: DEPOSIT {amount}\n"
+        answer = "Invalid syntax, Please use: DEPOSIT {amount}\n"
     
     client_socket.send(answer.encode())
 
@@ -131,9 +133,16 @@ def handle_balance(client_socket, username):
     answer = str(users.get_balance(DB, username)) + '\n'
     client_socket.send(answer.encode())
 
+def handle_currency(client_socket, username, response):
+    if len(response) > 1: 
+        answer = users.set_currency(DB, username, response[1])
+
+    else: 
+        answer = "Invalid syntax, Please use: CURRENCY {currency} \n available currencies: "
+    
+    client_socket.send(answer.encode())
 def handle_unknown(client_socket):
     client_socket.send(msg.MESSAGES["UNKNOWN_COMMAND"].encode())
-
 
 def handle_command(client_socket, username, response):
     command = response[0].upper()
@@ -146,7 +155,7 @@ def handle_command(client_socket, username, response):
     elif command == "CHECK":
         handle_check(client_socket, response)
     elif command == "PRODUCTS":
-        handle_products(client_socket)
+        handle_products(client_socket, username)
     elif command == "BUY":
         handle_buy(client_socket, username, response)
     elif command == "ADD":
@@ -163,12 +172,14 @@ def handle_command(client_socket, username, response):
         handle_deposit(client_socket, username,response)
     elif command == "BALANCE": 
         handle_balance(client_socket, username)
+    elif command == "CURRENCY": 
+        handle_currency(client_socket, username, response)
     else:
         handle_unknown(client_socket)
 
 def handle_client(client_socket, username):
     # Send initial prompt
-    products = get_products()
+    products = get_products(username)
     users_list = get_users()
     client_socket.send((msg.MESSAGES['PROMPT_USER'].format(items=products, users=users_list)).encode())
 

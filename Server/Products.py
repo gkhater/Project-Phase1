@@ -1,6 +1,7 @@
 import sqlite3
 import Messages as msg
 import Users 
+from Rates import convert
 
 def create(DB): 
     conn = sqlite3.connect(DB)
@@ -77,11 +78,14 @@ def buy(DB, product_id, username):
     finally: 
         conn.close()
 
-def update_product(DB, product_id, price=None, description=None, count=None):
+def update_product(DB, product_id, username, price=None, description=None, count=None):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
+    currency = Users.get_currency(DB, username)
+
     try:
         if price:
+            price = price * convert(currency, 'USD')
             cursor.execute('UPDATE products SET price = ? WHERE id = ?', (price, product_id))
         if description:
             cursor.execute('UPDATE products SET description = ? WHERE id = ?', (description, product_id))
@@ -94,7 +98,7 @@ def update_product(DB, product_id, price=None, description=None, count=None):
     finally:
         conn.close()
 
-def view_sold(DB, seller_username):
+def view_sold(DB, seller_username, username):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
@@ -102,11 +106,12 @@ def view_sold(DB, seller_username):
         cursor.execute("SELECT name, price, buyer FROM products WHERE seller = ? AND buyer != 'N/A'", (seller_username,))
         sold_products = cursor.fetchall()
 
+        currency = Users.get_currency(DB, username)
         if sold_products:
             result = "Products you've sold:\n"
             for product in sold_products:
                 name, price, buyer = product
-                result += f"Product: {name}, Price: ${price}, Buyer: {buyer}\n"
+                result += f"Product: {name}, Price: ${price * convert('USD', currency)}, Buyer: {buyer}\n"
             return result
         else:
             return msg.MESSAGES['NO_SALES']
@@ -122,11 +127,12 @@ def add(DB, product_name, username, price, description, count = 1):
     cursor = conn.cursor()
     cursor.execute("PRAGMA foreign_keys = ON")
     
+    currency = Users.get_currency(DB, username)
     try: 
         cursor.execute('''
             INSERT INTO products (name, description, price, seller, count)
             VALUES (?, ?, ?, ?, ?)
-        ''', (product_name, description, price, username, count))
+        ''', (product_name, description, price * convert(currency, 'USD'), username, count))
         conn.commit()
 
         ID = cursor.lastrowid
