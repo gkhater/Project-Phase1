@@ -129,13 +129,17 @@ def add(DB, product_name, username, price, description, count = 1):
     
     currency = Users.get_currency(DB, username)
     try: 
+        rate = convert(currency, 'USD')
+        price = price * rate
+
         cursor.execute('''
             INSERT INTO products (name, description, price, seller, count)
             VALUES (?, ?, ?, ?, ?)
-        ''', (product_name, description, price * convert(currency, 'USD'), username, count))
+        ''', (product_name, description, price, username, count))
         conn.commit()
 
         ID = cursor.lastrowid
+        print(ID)
         return msg.MESSAGES['PRODUCT_ADDED'].format(product_name = product_name), ID
     
     except Exception as e: 
