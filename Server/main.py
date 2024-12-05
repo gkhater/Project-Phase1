@@ -24,8 +24,8 @@ def get_products(username):
         "Description": product[3],
         "Price": product[4] * convert("USD", currency),
         "Seller": product[5],
-        "Rating": product[5],
-        "Reviews": product[6]
+        "Rating": product[6],
+        "Reviews": product[7]
     } for product in Products.fetch_products(DB)
     }
 
