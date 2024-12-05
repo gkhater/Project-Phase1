@@ -305,19 +305,6 @@ def handle_command(client_socket, username, response):
         handle_unknown(client_socket)
 
 def handle_client(client_socket, username, name):
-    # Send initial prompt
-    products = get_products(username)
-    users_list = get_users()
-    
-    data = {
-        "code": 200, 
-        "name": name, 
-        "products" : products, 
-        "users" : users_list
-    }
-
-    json_data = json.dumps(data, indent=4, ensure_ascii=False)
-    client_socket.sendall(json_data.encode('utf-8'))
     try:
         while True:
             response = client_socket.recv(1024).decode().split(' ')
@@ -381,18 +368,18 @@ def signOn_client(client_socket, client_address):
                 if done == "True": 
                     code = 200
                 
+                
+     
+                data = {
+                    "code" : code, 
+                    "name": realname, 
+                }
 
-                if code == 400: 
-                    data = {
-                        "code" : code, 
-                        "name": realname, 
-                    }
+                print(data)
 
-                    print(data)
+                json_data = json.dumps(data, indent=4)
 
-                    json_data = json.dumps(data, indent=4)
-
-                    client_socket.sendall(json_data.encode('utf-8'))
+                client_socket.sendall(json_data.encode('utf-8'))
 
                 if code == 200: 
                     online_users[username] = {
