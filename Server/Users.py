@@ -72,9 +72,9 @@ def authenticate(DB, username, password):
         if result: 
             name, key = result
             if verify_password(key, password):
-                return "True", msg.MESSAGES["WELCOME_CLIENT"].format(user=name)
+                return "True", name
 
-        return "False", msg.MESSAGES["AUTH_FAILED"]
+        return "False", ""
 
     finally: 
         conn.close()
@@ -93,9 +93,16 @@ def deposit(DB, username, amount):
             new_balance = current_balance + amount * convert(currency, 'USD')
             cursor.execute("UPDATE users SET balance = ? WHERE username = ?", (new_balance, username))
             conn.commit()
-            return f"Deposit successful. New balance for {username} is {new_balance * convert('USD', currency)}."
+            return {
+                "code": 200, 
+                "username": username,
+                "balance": new_balance
+            }
         else:
-            return f"User with username '{username}' not found."
+            return { 
+                "code": 404, 
+                "error": f"{username} not found"
+            }
     finally: 
         conn.close()
 
@@ -108,9 +115,15 @@ def get_balance(DB, username):
         result = cursor.fetchone()
 
         if result: 
-            return result[0] * convert('USD',result[1])
+            return{
+                "code": 200, 
+                "balance": result[0] * convert('USD',result[1])
+            } 
         else: 
-            return f"User with '{username}' not found."
+            return { 
+                "code": 404, 
+                "error": f"{username} not found."
+            }
     finally: 
         conn.close()
 
@@ -125,7 +138,7 @@ def get_currency(DB, username):
         if result: 
             return result[0]
         else: 
-            return f"User with {username} not found"
+            return "USD"
     finally: 
         conn.close()
 
@@ -147,9 +160,15 @@ def set_currency(DB, username, new_currency):
         # Update the currency
         cursor.execute("UPDATE users SET currency = ? WHERE username = ?", (new_currency, username))
         conn.commit()
-        return f"Currency for user '{username}' successfully updated to '{new_currency}'."
+        return {
+            "code": 200,
+            "currency": new_currency
+        }
     except Exception as e:
-        return f"Error updating currency: {e}"
+        return {
+            "code": 500, 
+            "error": "Internal Server error."
+        }
     finally:
         conn.close()
 

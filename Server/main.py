@@ -4,24 +4,50 @@ import os
 import Users as users
 import Products as Products
 import Messages as msg
+import json 
 from Rates import convert
+
 
 DB = 'auboutique.db'
 
 online_users = {}
 
 def get_users(): 
-    return '\n\t'.join(online_users.keys())
+    return list(online_users.keys())
 
 def get_products(username): 
     currency = users.get_currency(DB, username)
-    return '\n\t'.join([f"ID: {product[0]}, Name: {product[1]}, Count: {product[2]}, Description: {product[3]}, Price: {product[4] * convert('USD', currency)}, Seller: {product[5]}, Rating: {product[5]} ({product[6]} reviews)" 
-                      for product in Products.fetch_products(DB)])
+    data = { 
+        product[0]: {
+        "Name": product[1],
+        "Count": product[2],
+        "Description": product[3],
+        "Price": product[4] * convert("USD", currency),
+        "Seller": product[5],
+        "Rating": product[5],
+        "Reviews": product[6]
+    } for product in Products.fetch_products(DB)
+    }
+
+    return data
+
+
 
 def is_online(username): 
+    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     if username in online_users: 
-        return msg.MESSAGES['USER_ONLINE'].format(username=username)
-    return msg.MESSAGES['USER_OFFLINE'].format(username=username)
+        data = { 
+            "code": 200, 
+            "online": True
+        }
+        
+    else: 
+        data = { 
+            "code": 200, 
+            "online": False
+        }
+    
+    return data
 
 def handle_logout(client_socket, username):
     if username in online_users and online_users[username]["socket"] == client_socket: 
@@ -34,116 +60,205 @@ def handle_text(client_socket, username, response):
         destination= response[1]
         peer_address = get_peer_address(destination)
         if peer_address: 
-            client_socket.send(f"PEER {peer_address[0]} {peer_address[1]} {username}".encode())
-        else: 
-            client_socket.send(f"{destination} is offline.".encode())
-    else:
-        client_socket.send("Invalid TEXT command. Use TEXT [username] [message].".encode())
+            data = {
+                "code" : 200, 
+                "IP_address" : peer_address[0], 
+                "port": peer_address[1], 
+                "username": username
+            }
 
+        else: 
+            data = {
+                "code" : 404, 
+                "error": f"Username {username} is offline"
+            }
+    else:
+        data = { 
+            "code": 400, 
+            "error": "Invalid TEXT command."
+        }
+    
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
+
+#TODO implement with json
 def handle_help(client_socket):
     client_socket.send(msg.MESSAGES["HELP_PROMPT"].encode())
 
 def handle_check(client_socket, response):
     if len(response) > 1:
-        ans = is_online(response[1])
-        client_socket.send(ans.encode())
+        data = is_online(response[1])
+        json_data = json.dumps(data, indent=4)
+        client_socket.sendall(json_data.encode('utf-8'))
     else:
-        client_socket.send(msg.MESSAGES['INVALID_CHECK'].encode())
+        data = {
+            "code": 400, 
+            "error": "Invalid command."
+        }
+
+        print(data)
+        json_data = json.dumps(data, indent=4)
+        client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_products(client_socket, username):
-    products = "Available products: \n" + get_products(username)
-    client_socket.send(products.encode())
+    data = get_products(username)
+
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_buy(client_socket, username, response):
     if len(response) > 1:
         product_id = response[1].strip()
         result = Products.buy(DB, product_id, username)
-        client_socket.send(result.encode())
+        client_socket.sendall(result.encode('utf-8'))
     else:
-        client_socket.send(msg.MESSAGES['INVALID_BUY'].encode())
+        data = {
+            "code": 400, 
+            "error": "Invalid BUY"
+        }
+
+        print(data)
+        json_data = json.dumps(data, indent=4)
+        client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_add(client_socket, username, response):
     if len(response) > 3:
-        count, name, price, description = response[1].strip(), response[2].strip(), response[3].strip(), " ".join(response[3:]).strip()
-        result, ID = Products.add(DB, name, username, price, description, count=count)
+        count, name, price, description = response[1].strip(), response[2].strip(), response[3].strip(), " ".join(response[4:]).strip()
+        print(f"{name}, {username}, {price}, {description}, {count}")
+        data, ID = Products.add(DB, name, username, price, description, count=count)
 
-        client_socket.send(result.encode())
-
-        image_length = int(client_socket.recv(1024).decode())
-        data = b""
-        while len(data) < image_length:
-            packet = client_socket.recv(1024)
-            if not packet:
-                break
-            data += packet
-        path = os.path.join("Images", f"ID_{ID}.png")
-        try:
-            with open(path, "wb") as img:
-                img.write(data)
-            client_socket.send(msg.MESSAGES['IMG_SUCCESS'].encode())
-        except Exception as e:
-            client_socket.send(msg.MESSAGES['IMG_ERROR'].encode())
+        # image_length = int(client_socket.recv(1024).decode())
+        # data = b""
+        # while len(data) < image_length:
+        #     packet = client_socket.recv(1024)
+        #     if not packet:
+        #         break
+        #     data += packet
+        # path = os.path.join("Images", f"ID_{ID}.png")
     else:
-        client_socket.send(msg.MESSAGES['INVALID_ADD'].encode())
+        data = { 
+            "code": 400, 
+            "error": "Invalid add."
+        }
+
+    print(data)
+
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_sold(client_socket, username):
-    result = Products.view_sold(DB, username)
-    client_socket.send(result.encode())
+    result = Products.view_sold(DB, username, username)
+    client_socket.sendall(result.encode('utf-8'))
 
 def handle_online(client_socket):
     users_list = get_users()
-    message = f"Online users: \n{users_list}"
-    client_socket.send(message.encode())
+    data = { 
+        "code": 200, 
+        "users": users_list
+    }
+
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_rate(client_socket, response):
     if len(response) > 2:
         product_id, rating = response[1], int(response[2])
         if 1 <= rating <= 5:
-            result = Products.rate_product(DB, product_id, rating)
-            client_socket.send(result.encode())
+            data = Products.rate_product(DB, product_id, rating)
+            
         else:
-            client_socket.send("Rating must be between 1 and 5.".encode())
+            data = {
+                "code": 400, 
+                "error": "Rating must be between 1 and 5."
+            }
     else:
-        client_socket.send("Invalid RATE command. Use RATE [product_id] [rating].".encode())
+        data = { 
+            "code": 400, 
+            "error": "Invalid command."
+        }
+    
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_search(client_socket, response):
     if len(response) > 1:
         query = " ".join(response[1:])
         results = Products.search_products(DB, query)
         if isinstance(results, list):
-            message = "Search Results:\n" + "\n".join(
-                [f"ID: {r[0]}, Name: {r[1]}, Price: {r[3]}, Seller: {r[4]}" for r in results]
-            )
-            client_socket.send(message.encode())
+
+            data  = {
+                "Search Results": {
+                    r[0]: {
+                        "Name": r[1],
+                        "Price": r[3],
+                        "Seller": r[4]
+                    }
+                    for r in results
+                }
+            }
         else:
-            client_socket.send(results.encode())
+            data = {
+                "code": 500, 
+                "error": "Internal error searching product"
+            }
     else:
-        client_socket.send("Invalid SEARCH command. Use SEARCH [query].".encode())
+        data = {
+            "code": 400, 
+            "error": "Invalid search command."
+        }
+
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_deposit(client_socket, username,response): 
     if len(response) > 1: 
         amount = response[1]
-        answer = users.deposit(DB, username, int(amount))
+        data = users.deposit(DB, username, int(amount))
     else: 
-        answer = "Invalid syntax, Please use: DEPOSIT {amount}\n"
+        data = {
+            "code": 400, 
+            "error": "Invalid Request."
+        }
     
-    client_socket.send(answer.encode())
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 
 def handle_balance(client_socket, username): 
-    answer = str(users.get_balance(DB, username)) + '\n'
-    client_socket.send(answer.encode())
+    data = users.get_balance(DB, username)
+
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_currency(client_socket, username, response):
     if len(response) > 1: 
-        answer = users.set_currency(DB, username, response[1])
+        data = users.set_currency(DB, username, response[1])
 
     else: 
-        answer = "Invalid syntax, Please use: CURRENCY {currency} \n available currencies: "
+        data = { 
+            "code" : 400, 
+            "error": "Invalid Request."
+        }
+
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
     
-    client_socket.send(answer.encode())
 def handle_unknown(client_socket):
-    client_socket.send(msg.MESSAGES["UNKNOWN_COMMAND"].encode())
+    data = { 
+        "code": 400, 
+        "error": "Unknown command."
+    }
+
+    print(data)
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_command(client_socket, username, response):
     command = response[0].upper()
@@ -182,8 +297,14 @@ def handle_client(client_socket, username):
     # Send initial prompt
     products = get_products(username)
     users_list = get_users()
-    client_socket.send((msg.MESSAGES['PROMPT_USER'].format(items=products, users=users_list)).encode())
+    
+    data = {
+        "products" : products, 
+        "users" : users_list
+    }
 
+    json_data = json.dumps(data, indent=4)
+    client_socket.sendall(json_data.encode('utf-8'))
     try:
         while True:
             response = client_socket.recv(1024).decode().split(' ')
@@ -221,36 +342,50 @@ def signOn_client(client_socket, client_address):
 
                 password = client_socket.recv(1024).decode()
 
-                p2p_port = client_socket.recv(1024).decode()
 
                 done, result= users.add_user(DB, name, email, username, password)
                 client_socket.send(result.encode())
                 client_socket.send(done.encode())
 
-                if done == "True": 
-                    online_users[username] = {
-                        "socket" : client_socket, 
-                        "address": (client_address[0], p2p_port) #(IP, port)
-                    }
-                    handle_client(client_socket, username)
-                    break
+                break
                 
             elif choice.upper() == 'L': 
+                print("hi baba")
                 username = client_socket.recv(1024).decode()
 
+                print(username)
                 password = client_socket.recv(1024).decode()
 
+                print(password)
                 p2p_port = client_socket.recv(1024).decode()
 
-                done, result = users.authenticate(DB, username, password)
-                client_socket.send(result.encode())
-                client_socket.send(done.encode())
+                print("AAAAAAAAAAAAAAAA")
+                done, realname = users.authenticate(DB, username, password)
 
+                print("DONE: " + done)
+                code = 400
                 if done == "True": 
+                    code = 200
+            
+
+                data = {
+                    "code" : code, 
+                    "name": realname, 
+                }
+
+                print(data)
+
+                json_data = json.dumps(data, indent=4)
+
+                client_socket.sendall(json_data.encode('utf-8'))
+
+                if code == 200: 
                     online_users[username] = {
                         "socket" : client_socket, 
                         "address": (client_address[0], p2p_port) #(IP, port)
                     }
+
+                    print(f"code: {code}")
                     
                     handle_client(client_socket, username)
                     break

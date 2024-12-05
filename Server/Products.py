@@ -1,6 +1,7 @@
 import sqlite3
 import Messages as msg
 import Users 
+import json
 from Rates import convert
 
 def create(DB): 
@@ -56,9 +57,19 @@ def buy(DB, product_id, username):
             name, price, count = product
 
             if count < 0:
-                return msg.MESSAGES['ITEM_NOT_AVAILABLE'].format(name=name)
-            if price > Users.get_balance(DB, username): 
-                return f"Insufficient funds!"
+                data = {
+                    "code": 400, 
+                    "error": "Item not available."
+                }
+                json_data = json.dumps(data, indent=4)
+                return json_data
+            if price > Users.get_balance(DB, username)["balance"]: 
+                data = {
+                    "code": 400, 
+                    "error": "Insuficient funds."
+                }
+                json_data = json.dumps(data, indent=4)
+                return json_data
             
             Users.deposit(DB, username, -price)
             seller = get_seller(DB, product_id)
@@ -67,10 +78,20 @@ def buy(DB, product_id, username):
             cursor.execute("UPDATE products SET count = ?, buyer = ? WHERE id = ?", (newcount, username, product_id))
             conn.commit()
 
-            return msg.MESSAGES['SALE_SUCCESS'].format(name=name, price=price)                
+            data = { 
+                "code": 200, 
+                "name": name, 
+                "price": price
+            }              
             
         else: 
-            return msg.MESSAGES['PRODUCT_NOT_FOUND']
+            data = { 
+                "code": 404, 
+                "error": "Product not found"
+            }
+        
+        json_data = json.dumps(data, indent=4)
+        return json_data
         
     except Exception as e: 
         return f"Error processing purchase: {e}"
@@ -94,7 +115,7 @@ def update_product(DB, product_id, username, price=None, description=None, count
         conn.commit()
         return "Product updated successfully."
     except Exception as e:
-        return f"Error updating product: {e}"
+        return f"Error updating product."
     finally:
         conn.close()
 
@@ -108,13 +129,27 @@ def view_sold(DB, seller_username, username):
 
         currency = Users.get_currency(DB, username)
         if sold_products:
-            result = "Products you've sold:\n"
+            result = []
             for product in sold_products:
                 name, price, buyer = product
-                result += f"Product: {name}, Price: ${price * convert('USD', currency)}, Buyer: {buyer}\n"
-            return result
+                result.append({
+                    "Product": name,
+                    "Price": price * convert("USD", currency),
+                    "Buyer": buyer
+                })
+
+            data = {
+                "code": 200, 
+                "result": result
+            }
         else:
-            return msg.MESSAGES['NO_SALES']
+            data = { 
+                "code": 404, 
+                "error": "No sale"
+            }
+
+        json_data = json.dumps(data, indent=4)
+        return json_data
 
     except Exception as e:
         return f"Error fetching sold products: {e}"
@@ -130,7 +165,7 @@ def add(DB, product_name, username, price, description, count = 1):
     currency = Users.get_currency(DB, username)
     try: 
         rate = convert(currency, 'USD')
-        price = price * rate
+        price = int(price) * int(rate)
 
         cursor.execute('''
             INSERT INTO products (name, description, price, seller, count)
@@ -140,10 +175,23 @@ def add(DB, product_name, username, price, description, count = 1):
 
         ID = cursor.lastrowid
         print(ID)
-        return msg.MESSAGES['PRODUCT_ADDED'].format(product_name = product_name), ID
+
+        data = { 
+            "code": 200, 
+            "product_name": product_name, 
+            "description": description, 
+            "price": price, 
+            "username": username, 
+            "count": count
+        }
+        return data, ID
     
     except Exception as e: 
-        return f"Error adding product {e}"
+        data = {
+            "code": 500, 
+            "error": f"Internal error adding product {e}"
+        }
+        return data, 0
 
     finally: 
         conn.close()
@@ -163,9 +211,18 @@ def rate_product(DB, product_id, rating):
             cursor.execute('UPDATE products SET rating = ?, rating_count = ? WHERE id = ?', 
                            (new_rating, new_count, product_id))
             conn.commit()
-            return msg.MESSAGES['RATING_SUCCESS'].format(name=product_id, rating=rating)
+
+            data = {
+                "code": 200, 
+                "rating": rating
+            }
         else: 
-            return msg.MESSAGES['PRODUCT_NOT_FOUND']
+            data = {
+                "code": 404, 
+                "error": "Product Not found."
+            }
+        
+        return data
     except Exception as e:
         return f"Error rating product: {e}"
     finally: 

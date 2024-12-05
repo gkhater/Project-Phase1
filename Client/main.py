@@ -75,7 +75,7 @@ def log_in(tcp_socket, p2p_port):
         print(server_message)
         done = tcp_socket.recv(1024).decode()
 
-        return done
+        return done                  
     except Exception as e:
         print(f"Error during login: {e}")
         return None
