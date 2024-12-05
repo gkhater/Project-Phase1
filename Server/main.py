@@ -5,6 +5,7 @@ import Users as users
 import Products as Products
 import Messages as msg
 import json 
+import base64
 from Rates import convert
 
 
@@ -25,12 +26,22 @@ def get_products(username):
         "Price": product[4] * convert("USD", currency),
         "Seller": product[5],
         "Rating": product[6],
-        "Reviews": product[7]
-    } for product in Products.fetch_products(DB)
+        "Reviews": product[7],
+        # "Image": get_image(2)
+    }
+    for product in Products.fetch_products(DB)
     }
 
     return data
 
+def get_image(ID): 
+    img_path = f"Images\ID_{ID}.jpg"
+    with open(img_path, 'rb') as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')  # Decode to convert bytes to a string
+
+    encoded_image = json.dumps(encoded_image)
+    print(encoded_image)
+    return encoded_image
 
 
 def is_online(username): 
@@ -293,17 +304,19 @@ def handle_command(client_socket, username, response):
     else:
         handle_unknown(client_socket)
 
-def handle_client(client_socket, username):
+def handle_client(client_socket, username, name):
     # Send initial prompt
     products = get_products(username)
     users_list = get_users()
     
     data = {
+        "code": 200, 
+        "name": name, 
         "products" : products, 
         "users" : users_list
     }
 
-    json_data = json.dumps(data, indent=4)
+    json_data = json.dumps(data, indent=4, ensure_ascii=False)
     client_socket.sendall(json_data.encode('utf-8'))
     try:
         while True:
@@ -330,6 +343,7 @@ def get_peer_address(username):
 def signOn_client(client_socket, client_address): 
     try:
         while True: 
+            #TODO serialize
             choice = client_socket.recv(1024).decode()
             choice.strip()
 
@@ -366,18 +380,19 @@ def signOn_client(client_socket, client_address):
                 code = 400
                 if done == "True": 
                     code = 200
-            
+                
 
-                data = {
-                    "code" : code, 
-                    "name": realname, 
-                }
+                if code == 400: 
+                    data = {
+                        "code" : code, 
+                        "name": realname, 
+                    }
 
-                print(data)
+                    print(data)
 
-                json_data = json.dumps(data, indent=4)
+                    json_data = json.dumps(data, indent=4)
 
-                client_socket.sendall(json_data.encode('utf-8'))
+                    client_socket.sendall(json_data.encode('utf-8'))
 
                 if code == 200: 
                     online_users[username] = {
@@ -387,7 +402,7 @@ def signOn_client(client_socket, client_address):
 
                     print(f"code: {code}")
                     
-                    handle_client(client_socket, username)
+                    handle_client(client_socket, username, realname)
                     break
 
             else:

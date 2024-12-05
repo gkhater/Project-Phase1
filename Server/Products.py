@@ -165,7 +165,7 @@ def add(DB, product_name, username, price, description, count = 1):
     currency = Users.get_currency(DB, username)
     try: 
         rate = convert(currency, 'USD')
-        price = int(price) * int(rate)
+        price = float(price) * float(rate)
 
         cursor.execute('''
             INSERT INTO products (name, description, price, seller, count)

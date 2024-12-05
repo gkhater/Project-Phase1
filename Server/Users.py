@@ -30,6 +30,7 @@ def create(DB):
 
 # Adds a user to the db
 # Users are defined by their username
+#TODO
 def add_user(DB, name, email, username, password):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()

@@ -14,7 +14,6 @@ class ExchangeRateCache:
         if key in self.cache:
             rate, timestamp = self.cache[key]
             if time.time() - timestamp < self.ttl:  # Check if within TTL
-                print(f"RATE: {rate}")
                 return rate
         
         # If not in cache or expired, fetch from API
@@ -22,7 +21,6 @@ class ExchangeRateCache:
         if rate is not None:
             self.cache[key] = (rate, time.time())  # Update cache
         
-        print(f"RATE: {rate}")
         return rate
 
     def fetch_rate(self, base, target):
