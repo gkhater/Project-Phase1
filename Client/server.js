@@ -180,9 +180,9 @@ app.post('/deposit', (req, res) => {
         client.once('data', (data) => {
             const responseData = JSON.parse(data.toString());
             if (responseData.code === 200) {
-                res.json({ success: true, message: 'Item added successfully' });
+                res.json({ success: true, message: 'Deposit successful' });
             } else {
-                res.json({ success: false, message: 'Failed to add item' });
+                res.json({ success: false, message: 'Failed to deposit' });
             }
         });
     } else {
