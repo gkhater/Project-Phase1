@@ -14,6 +14,7 @@ def create(DB):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             description TEXT NOT NULL,
+            image TEXT,
             price REAL NOT NULL,
             seller TEXT NOT NULL,
             count INTEGER DEFAULT 1,  
@@ -99,7 +100,7 @@ def buy(DB, product_id, username):
     finally: 
         conn.close()
 
-def update_product(DB, product_id, username, price=None, description=None, count=None):
+def update_product(DB, product_id, username, price=None, description=None, count=None, image = None):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     currency = Users.get_currency(DB, username)
@@ -112,6 +113,8 @@ def update_product(DB, product_id, username, price=None, description=None, count
             cursor.execute('UPDATE products SET description = ? WHERE id = ?', (description, product_id))
         if count is not None:
             cursor.execute('UPDATE products SET count = ? WHERE id = ?', (count, product_id))
+        if image is not None:
+            cursor.execute('UPDATE products SET image = ? WHERE id = ?', (image, product_id))
         conn.commit()
         return "Product updated successfully."
     except Exception as e:
@@ -157,7 +160,7 @@ def view_sold(DB, seller_username, username):
     finally:
         conn.close()
 
-def add(DB, product_name, username, price, description, count = 1): 
+def add(DB, product_name, username, price, description, image, count = 1): 
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     cursor.execute("PRAGMA foreign_keys = ON")
@@ -168,9 +171,9 @@ def add(DB, product_name, username, price, description, count = 1):
         price = float(price) * float(rate)
 
         cursor.execute('''
-            INSERT INTO products (name, description, price, seller, count)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (product_name, description, price, username, count))
+            INSERT INTO products (name, description, price, seller, count, image)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (product_name, description, price, username, count, image))
         conn.commit()
 
         ID = cursor.lastrowid
@@ -268,7 +271,7 @@ def fetch_products(DB):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
-    cursor.execute('SELECT id, name, count, description, price, seller, rating, rating_count FROM products WHERE count > 0')
+    cursor.execute('SELECT id, name, count, description, price, seller, rating, rating_count, image FROM products WHERE count > 0')
     products = cursor.fetchall()
 
     conn.close()

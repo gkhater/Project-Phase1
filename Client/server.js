@@ -23,8 +23,7 @@ let isClientConnected = false;
 
 // Connect to the server and keep the connection open
 function connectToServer() {
-    // client.connect(5001, '192.168.204.63', () => {
-        client.connect(5001, '127.0.0.1', () => {
+    client.connect(5001, '127.0.0.1', () => {
         console.log('Connected to server');
         isClientConnected = true;
     });
@@ -37,7 +36,7 @@ function connectToServer() {
     client.on('close', () => {
         console.log('Connection closed, reconnecting...');
         isClientConnected = false;
-        setTimeout(connectToServer, 1000); // Attempt to reconnect after 3 seconds
+        setTimeout(connectToServer, 1000); // Attempt to reconnect after 1 second
     });
 }
 
@@ -59,14 +58,16 @@ app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     if (isClientConnected) {
-        // Send messages
-        const messages = ['l', username, password, "5003"];
-        messages.forEach((message, index) => {
-            setTimeout(() => {
-                client.write(Buffer.from(message, 'utf-8')); // Send each message encoded as UTF-8
-                console.log(`Sent: ${message}`);
-            }, 1000 * index); // Delay increases for each subsequent message
-        });
+        // Send JSON data for login
+        const loginData = {
+            choice: `l`,
+            username: username,
+            password: password,
+            p2p_port: "5003"
+        };
+        const jsonMessage = JSON.stringify(loginData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
     } else {
         res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
     }
@@ -89,14 +90,17 @@ app.post('/signin', (req, res) => {
     const { name, email, username, password } = req.body;
 
     if (isClientConnected) {
-        // Send messages
-        const messages = ['s', name, email, username, password];
-        messages.forEach((message, index) => {
-            setTimeout(() => {
-                client.write(Buffer.from(message, 'utf-8')); // Send each message encoded as UTF-8
-                console.log(`Sent: ${message}`);
-            }, 1000 * index); // Delay increases for each subsequent message
-        });
+        // Send JSON data for sign in
+        const signupData = {
+            choice: `s`,
+            name: name,
+            email: email,
+            username: username,
+            password: password
+        };
+        const jsonMessage = JSON.stringify(signupData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
     } else {
         res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
     }
@@ -111,10 +115,13 @@ app.post('/signin', (req, res) => {
 // Handle logout request
 app.post('/logout', (req, res) => {
     if (isClientConnected) {
-        // Send logout message
-        client.write(Buffer.from('logout', 'utf-8'));
+        // Send logout command as JSON
+        const logoutData = {
+            command: 'logout'
+        };
+        const jsonMessage = JSON.stringify(logoutData);
+        client.write(jsonMessage);
         res.redirect('/');  
-        // console.log('Sent: logout');
     } else {
         res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
     }
@@ -131,14 +138,18 @@ app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
 
-
 // Endpoint to handle adding a new item
 app.post('/add-item', (req, res) => {
     const { name, qty, price, description, image } = req.body;
-    // console.log(image);
+
     if (isClientConnected) {
-        const message = `add ${qty} ${name} ${price} ${image} ${description}`;
-        client.write(Buffer.from(message, 'utf-8'));
+        // Send add-item command as JSON
+        const addItemData = {
+            command: `add ${qty} ${name} ${price} ${image} ${description}`,
+        };
+        const jsonMessage = JSON.stringify(addItemData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
 
         client.once('data', (data) => {
             const responseData = JSON.parse(data.toString());
@@ -153,50 +164,24 @@ app.post('/add-item', (req, res) => {
     }
 });
 
-// app.post('/add-item', (req, res) => {
-//     const { name, qty, price, description, image } = req.body;
-    
-//     if (isClientConnected) {
-//         // Use a delimiter to split the message, ensuring every component is present
-//         const message = `add ${qty} ${name} ${price} ${description} IMAGE_START${image || ''}IMAGE_END`;
-        
-//         client.write(Buffer.from(message, 'utf-8'));
-
-//         client.once('data', (data) => {
-//             try {
-//                 const responseData = JSON.parse(data.toString());
-//                 if (responseData.code === 200) {
-//                     res.json({ success: true, message: 'Item added successfully' });
-//                 } else {
-//                     res.json({ success: false, message: responseData.error || 'Failed to add item' });
-//                 }
-//             } catch (error) {
-//                 res.status(500).json({ success: false, message: 'Error processing server response' });
-//             }
-//         });
-//     } else {
-//         res.status(500).json({ success: false, message: 'Not connected to server' });
-//     }
-// });
-
 // Route to handle "products" request
 app.get('/products', async (req, res) => {
-    const backendData = JSON.stringify({ command: 'products' });
     if (isClientConnected) {
-        const message = "products"
-        // const message = JSON.stringify({ command: 'products' });
-        
-        client.write(Buffer.from(message, 'utf-8'));
+        // Send products request as JSON
+        const productsData = {
+            command: 'products'
+        };
+        const jsonMessage = JSON.stringify(productsData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
     }  else {
         res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
     }
 
-
     client.once('data', (data) => {
-        // console.log(data.toString())
         const response = JSON.parse(data.toString());
         res.json(response);
-        console.log(response)
+        console.log(response);
     });
 
     client.on('error', (err) => {

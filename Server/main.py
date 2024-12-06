@@ -32,8 +32,8 @@ def get_products(username):
     for product in Products.fetch_products(DB)
     }
 
+    print(data)
     return data
-
 
 
 def is_online(username): 
@@ -131,7 +131,7 @@ def handle_add(client_socket, username, response):
         count, name, price, image, description = response[1].strip(), response[2].strip(), response[3].strip(), response[4].strip(), " ".join(response[5:]).strip()
         print(f"{name}, {username}, {price}, {description}, {count}")
         # print(f"{image}")
-        data, ID = Products.add(DB, name, username, price, description, image, count=count)
+        data, ID = Products.add(DB, name, username, price, description,image=image, count=count)
 
     else:
         data = { 
@@ -226,7 +226,6 @@ def handle_deposit(client_socket, username,response):
     json_data = json.dumps(data, indent=4)
     client_socket.sendall(json_data.encode('utf-8'))
 
-
 def handle_balance(client_socket, username): 
     data = users.get_balance(DB, username)
 
@@ -248,10 +247,10 @@ def handle_currency(client_socket, username, response):
     json_data = json.dumps(data, indent=4)
     client_socket.sendall(json_data.encode('utf-8'))
     
-def handle_unknown(client_socket):
+def handle_unknown(client_socket, command):
     data = { 
         "code": 400, 
-        "error": "Unknown command."
+        "error": f"Unknown command. {command}"
     }
 
     print(data)
@@ -260,6 +259,7 @@ def handle_unknown(client_socket):
 
 def handle_command(client_socket, username, response):
     command = response[0].upper()
+    print(command)
     if command == "LOGOUT":
         return "LOGOUT"
     elif command == "TEXT":
@@ -289,29 +289,36 @@ def handle_command(client_socket, username, response):
     elif command == "CURRENCY": 
         handle_currency(client_socket, username, response)
     else:
-        handle_unknown(client_socket)
+        handle_unknown(client_socket, command)
+
+# Function to receive data equivalent to sendall
+def recv_all(sock):
+    buffer = ""
+    while True:
+        part = sock.recv(1024).decode()  # Receive data in chunks of 1024 bytes
+        buffer += part
+        try:
+            data = json.loads(buffer)  # Try to parse JSON to ensure the complete message is received
+            return data
+        except json.JSONDecodeError:
+            # If parsing fails, continue to receive more data
+            continue
 
 def handle_client(client_socket, username, name):
     try:
+        print("handling client")
         while True:
             # Receive the JSON data from the client
-            data = client_socket.recv(1024).decode()
-            data = data.strip()
+            data = recv_all(client_socket)
             
-            try:
-                # Load the JSON data into a dictionary
-                client_data = json.loads(data)
-            except json.JSONDecodeError:
-                client_socket.send("Invalid JSON format".encode())
-                continue
-
-            # Check if the 'command' field is present in the data
-            if 'command' not in client_data:
+            print(data)
+            
+            if 'command' not in data:
                 client_socket.send("Missing 'command' field in JSON data".encode())
                 continue
-
-            command = client_data['command'].strip().split(' ')
             
+            command = data['command'].strip().split(' ')
+
             # Handle the command
             if handle_command(client_socket, username, command) == "LOGOUT":
                 break
