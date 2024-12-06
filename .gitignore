@@ -120,3 +120,5 @@ $RECYCLE.BIN/
 #word docx
 *.docx
 
+#npm packages
+node_modules/
