@@ -27,21 +27,13 @@ def get_products(username):
         "Seller": product[5],
         "Rating": product[6],
         "Reviews": product[7],
-        # "Image": get_image(2)
+        "Image": product[8]
     }
     for product in Products.fetch_products(DB)
     }
 
     return data
 
-def get_image(ID): 
-    img_path = f"Images\ID_{ID}.jpg"
-    with open(img_path, 'rb') as image_file:
-        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')  # Decode to convert bytes to a string
-
-    encoded_image = json.dumps(encoded_image)
-    print(encoded_image)
-    return encoded_image
 
 
 def is_online(username): 
@@ -133,30 +125,25 @@ def handle_buy(client_socket, username, response):
         json_data = json.dumps(data, indent=4)
         client_socket.sendall(json_data.encode('utf-8'))
 
+
 def handle_add(client_socket, username, response):
     if len(response) > 3:
-        count, name, price, description = response[1].strip(), response[2].strip(), response[3].strip(), " ".join(response[4:]).strip()
+        count, name, price, image, description = response[1].strip(), response[2].strip(), response[3].strip(), response[4].strip(), " ".join(response[5:]).strip()
         print(f"{name}, {username}, {price}, {description}, {count}")
-        data, ID = Products.add(DB, name, username, price, description, count=count)
+        # print(f"{image}")
+        data, ID = Products.add(DB, name, username, price, description, image, count=count)
 
-        # image_length = int(client_socket.recv(1024).decode())
-        # data = b""
-        # while len(data) < image_length:
-        #     packet = client_socket.recv(1024)
-        #     if not packet:
-        #         break
-        #     data += packet
-        # path = os.path.join("Images", f"ID_{ID}.png")
     else:
         data = { 
             "code": 400, 
             "error": "Invalid add."
         }
-
-    print(data)
+    
+    # print(data)
 
     json_data = json.dumps(data, indent=4)
     client_socket.sendall(json_data.encode('utf-8'))
+
 
 def handle_sold(client_socket, username):
     result = Products.view_sold(DB, username, username)
