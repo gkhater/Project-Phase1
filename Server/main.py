@@ -294,12 +294,30 @@ def handle_command(client_socket, username, response):
 def handle_client(client_socket, username, name):
     try:
         while True:
-            response = client_socket.recv(1024).decode().split(' ')
-            if handle_command(client_socket, username, response) == "LOGOUT":
+            # Receive the JSON data from the client
+            data = client_socket.recv(1024).decode()
+            data = data.strip()
+            
+            try:
+                # Load the JSON data into a dictionary
+                client_data = json.loads(data)
+            except json.JSONDecodeError:
+                client_socket.send("Invalid JSON format".encode())
+                continue
+
+            # Check if the 'command' field is present in the data
+            if 'command' not in client_data:
+                client_socket.send("Missing 'command' field in JSON data".encode())
+                continue
+
+            command = client_data['command'].strip().split(' ')
+            
+            # Handle the command
+            if handle_command(client_socket, username, command) == "LOGOUT":
                 break
     finally:
         handle_logout(client_socket, username)
-
+        
 def send_Message(username, destination, message): 
     if destination not in online_users: 
         return msg.MESSAGES["TEXT_OFFLINE"].format(destination=destination)
@@ -317,65 +335,72 @@ def get_peer_address(username):
 def signOn_client(client_socket, client_address): 
     try:
         while True: 
-            #TODO serialize
-            choice = client_socket.recv(1024).decode()
-            choice.strip()
+            # Receive the JSON data from the client
+            data = client_socket.recv(1024).decode()
+            data = data.strip()
+            
+            try:
+                # Load the JSON data into a dictionary
+                client_data = json.loads(data)
+            except json.JSONDecodeError:
+                client_socket.send("Invalid JSON format".encode())
+                continue
 
-            if choice.upper() == 'S': 
-                name = client_socket.recv(1024).decode()
+            # Check if the 'choice' field is present in the data
+            if 'choice' not in client_data:
+                client_socket.send("Missing 'choice' field in JSON data".encode())
+                continue
 
-                email = client_socket.recv(1024).decode()
+            choice = client_data['choice'].strip().upper()
 
-                username = client_socket.recv(1024).decode()
+            if choice == 'S': 
+                # Extract required fields from the received JSON data
+                name = client_data.get('name')
+                email = client_data.get('email')
+                username = client_data.get('username')
+                password = client_data.get('password')
 
-                password = client_socket.recv(1024).decode()
+                if not all([name, email, username, password]):
+                    client_socket.send("Missing fields for signup".encode())
+                    continue
 
-
-                done, result= users.add_user(DB, name, email, username, password)
+                # Add user to the database
+                done, result = users.add_user(DB, name, email, username, password)
                 client_socket.send(result.encode())
                 client_socket.send(done.encode())
-
                 break
-                
-            elif choice.upper() == 'L': 
-                print("hi baba")
-                username = client_socket.recv(1024).decode()
 
-                print(username)
-                password = client_socket.recv(1024).decode()
+            elif choice == 'L': 
+                # Extract required fields from the received JSON data
+                username = client_data.get('username')
+                password = client_data.get('password')
+                p2p_port = client_data.get('p2p_port')
 
-                print(password)
-                p2p_port = client_socket.recv(1024).decode()
+                if not all([username, password, p2p_port]):
+                    client_socket.send("Missing fields for login".encode())
+                    continue
 
-                print("AAAAAAAAAAAAAAAA")
+                # Authenticate the user
                 done, realname = users.authenticate(DB, username, password)
-
-                print("DONE: " + done)
                 code = 400
                 if done == "True": 
                     code = 200
-                
-                
-     
-                data = {
-                    "code" : code, 
-                    "name": realname, 
+
+                # Prepare response data
+                response_data = {
+                    "code": code,
+                    "name": realname,
                 }
 
-                print(data)
-
-                json_data = json.dumps(data, indent=4)
-
-                client_socket.sendall(json_data.encode('utf-8'))
+                json_response = json.dumps(response_data, indent=4)
+                client_socket.sendall(json_response.encode('utf-8'))
 
                 if code == 200: 
                     online_users[username] = {
-                        "socket" : client_socket, 
-                        "address": (client_address[0], p2p_port) #(IP, port)
+                        "socket": client_socket,
+                        "address": (client_address[0], p2p_port)  # (IP, port)
                     }
 
-                    print(f"code: {code}")
-                    
                     handle_client(client_socket, username, realname)
                     break
 
