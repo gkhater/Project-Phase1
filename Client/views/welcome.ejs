@@ -66,8 +66,6 @@
                     const cleanBase64 = product.Image && product.Image !== '""' ? product.Image.replace(/\s+/g, '').replace(/"/g, '').trim() : '';
                     const imageSource = cleanBase64 ? `data:image/png;base64,${cleanBase64}` : '';
 
-                    // console.log('Image Source:', imageSource);
-
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td style="display:none;">${productID}</td>
@@ -88,6 +86,31 @@
                 console.error('Error fetching products:', error);
             }
         }
+
+        // Handle deposit form submission asynchronously
+        document.addEventListener('DOMContentLoaded', () => {
+            const depositForm = document.getElementById('depositForm');
+            depositForm.onsubmit = async function(event) {
+                event.preventDefault();
+                const amount = document.getElementById('amount').value;
+
+                try {
+                    const response = await fetch('/deposit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ amount })
+                    });
+                    const result = await response.json();
+                    alert(result.message);
+                    // Optionally refresh the page or update UI accordingly
+                    fetchAndPopulateProducts();
+                } catch (error) {
+                    console.error('Error processing deposit:', error);
+                }
+            };
+        });
     </script>
 </head>
 <body>
@@ -95,21 +118,23 @@
         <h2>Welcome, <%= username %>!</h2>
 
         <!-- Logout button -->
-        <form action="/logout" method="POST">
-            <button type="submit">Logout</button>
+        <form action="/logout" method="POST" style="display: inline-block; margin-bottom: 20px;">
+            <button type="submit" class="button logout-button">Logout</button>
         </form>
 
         <!-- Currency selection dropdown -->
-        <label for="currencySelect">Select Currency:</label>
-        <select id="currencySelect" onchange="handleCurrencyChange(event)">
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-        </select>
+        <div class="currency-container">
+            <label for="currencySelect">Select Currency:</label>
+            <select id="currencySelect" onchange="handleCurrencyChange(event)" class="currency-select">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+            </select>
+        </div>
 
         <h3>Items:</h3>
         <form action="/purchase" method="POST">
-            <table>
+            <table class="product-table">
                 <thead>
                     <tr>
                         <th style="display:none;">Product ID</th>
@@ -128,12 +153,22 @@
                     <!-- Table rows will be dynamically populated here -->
                 </tbody>
             </table>
-            <p>Total Price: <span id="totalPrice">0.00 USD</span></p>
+            <p class="total-price">Total Price: <span id="totalPrice">0.00 USD</span></p>
             <div class="buttons-container">
-                <button type="submit">Purchase Selected Items</button>
-                <button type="button" id="addItemBtn">Add Item</button>
+                <button type="submit" class="button purchase-button">Purchase Selected Items</button>
+                <button type="button" id="addItemBtn" class="button add-item-button">Add Item</button>
             </div>
         </form>
+
+        <!-- Deposit Form -->
+        <div class="deposit-container" style="margin-top: 10px; display: inline-block; vertical-align: top;">
+            <form id="depositForm" class="deposit-form" style="display: flex; flex-direction: column; align-items: center;">
+                <h3 style="color: #007bff;">Deposit Amount</h3>
+                <label for="amount" style="font-weight: bold;">Amount:</label>
+                <input type="number" id="amount" name="amount" required class="deposit-input" style="width: 150px; padding: 5px; margin: 5px 0;">
+                <button type="submit" class="button deposit-button" style="background-color: #007bff;">Deposit</button>
+            </form>
+        </div>
     </div>
 
     <!-- Add Item Modal -->
@@ -152,7 +187,7 @@
                 <textarea id="description" name="description" required></textarea><br><br>
                 <label for="image">Upload Image:</label><br>
                 <input type="file" id="image" name="image" accept="image/*"><br><br>
-                <button type="button" id="submitBtn">Add Item</button>
+                <button type="button" id="submitBtn" class="button submit-button">Add Item</button>
             </form>
         </div>
     </div>
@@ -178,6 +213,83 @@
   }
   .close {
     float: right;
+    cursor: pointer;
+  }
+  .welcome-container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  .currency-container {
+    margin-bottom: 20px;
+  }
+  .currency-select {
+    padding: 5px;
+    margin-left: 10px;
+  }
+  .product-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  .product-table th, .product-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  .total-price {
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  .buttons-container {
+    display: flex;
+    gap: 10px;
+  }
+  .button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .button:hover {
+    background-color: #007bff;
+  }
+  .logout-button {
+    background-color: #f44336;
+  }
+  .logout-button:hover {
+    background-color: #e53935;
+  }
+  .deposit-container {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f0f8ff;
+    max-width: 250px;
+  }
+  .deposit-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .deposit-input {
+    width: 150px;
+    padding: 5px;
+    margin: 5px 0;
+    border-radius: 5px;
+  }
+  .deposit-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
   }
 </style>

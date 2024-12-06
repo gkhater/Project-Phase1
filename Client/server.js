@@ -164,6 +164,32 @@ app.post('/add-item', (req, res) => {
     }
 });
 
+// Endpoint to handle deposit
+app.post('/deposit', (req, res) => {
+    const { amount } = req.body;
+
+    if (isClientConnected) {
+        // Send deposit command to server
+        const depositData = {
+            command: `deposit ${amount}`,
+        };
+        const jsonMessage = JSON.stringify(depositData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
+
+        client.once('data', (data) => {
+            const responseData = JSON.parse(data.toString());
+            if (responseData.code === 200) {
+                res.json({ success: true, message: 'Item added successfully' });
+            } else {
+                res.json({ success: false, message: 'Failed to add item' });
+            }
+        });
+    } else {
+        res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
+    }
+});
+
 // Route to handle "products" request
 app.get('/products', async (req, res) => {
     if (isClientConnected) {
