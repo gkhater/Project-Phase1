@@ -317,7 +317,7 @@ def handle_client(client_socket, username, name):
                 break
     finally:
         handle_logout(client_socket, username)
-        
+
 def send_Message(username, destination, message): 
     if destination not in online_users: 
         return msg.MESSAGES["TEXT_OFFLINE"].format(destination=destination)
@@ -407,6 +407,8 @@ def signOn_client(client_socket, client_address):
             else:
                 client_socket.send(msg.MESSAGES["INVALID_CHOICE"].encode())
 
+    except KeyboardInterrupt as k: 
+        pass
     except Exception as e:
         print(f"Error handling client: {e}")
 
