@@ -215,3 +215,49 @@ app.get('/products', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch products' });
     });
 });
+
+// Endpoint to handle purchasing selected items
+app.post('/purchase', async (req, res) => {
+    let { selectedProducts } = req.body;
+
+    if (!Array.isArray(selectedProducts)) {
+        selectedProducts = [selectedProducts];
+    }
+
+    if (isClientConnected) {
+        try {
+            for (const productID of selectedProducts) {
+                // Send buy command for each selected product
+                const buyData = {
+                    command: `buy ${productID}`
+                };
+                const jsonMessage = JSON.stringify(buyData);
+                client.write(jsonMessage);
+                console.log(`Sent: ${jsonMessage}`);
+
+                // Await server response for each buy command
+                const response = await new Promise((resolve, reject) => {
+                    client.once('data', (data) => {
+                        const responseData = JSON.parse(data.toString());
+                        resolve(responseData);
+                    });
+                    client.on('error', (err) => {
+                        reject(err);
+                    });
+                });
+
+                if (response.code === 200) {
+                    console.log(`Purchase of product ${productID} successful`);
+                } else {
+                    console.log(`Failed to purchase product ${productID}`);
+                }
+            }
+            res.json({ success: true, message: 'Purchase initiated for selected items' });
+        } catch (error) {
+            console.error('Error processing purchase:', error);
+            res.status(500).json({ success: false, message: 'Failed to complete purchase' });
+        }
+    } else {
+        res.status(500).json({ success: false, message: 'Not connected to server' });
+    }
+});
