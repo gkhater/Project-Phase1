@@ -1,0 +1,14 @@
+{
+  "name": "nodejs_webgui_project",
+  "version": "1.0.0",
+  "description": "Node.js project with Web GUI, Express, and Socket interaction",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "body-parser": "^1.19.0",
+    "ejs": "^3.1.6"
+  }
+}
