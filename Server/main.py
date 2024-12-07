@@ -13,8 +13,16 @@ DB = 'auboutique.db'
 
 online_users = {}
 
-def get_users(): 
-    return online_users
+def get_users():
+    return {
+        username: {
+            "IP": address[0], 
+            "Port": address[1]
+        } 
+        for username, details in online_users.items() 
+        for address in [details["address"]]
+    }
+
 
 def get_products(username): 
     currency = users.get_currency(DB, username)
