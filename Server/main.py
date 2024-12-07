@@ -14,7 +14,7 @@ DB = 'auboutique.db'
 online_users = {}
 
 def get_users(): 
-    return list(online_users.keys())
+    return online_users
 
 def get_products(username): 
     currency = users.get_currency(DB, username)
@@ -151,6 +151,7 @@ def handle_sold(client_socket, username):
 
 def handle_online(client_socket):
     users_list = get_users()
+    
     data = { 
         "code": 200, 
         "users": users_list
