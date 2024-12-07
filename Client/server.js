@@ -23,7 +23,8 @@ let isClientConnected = false;
 
 // Connect to the server and keep the connection open
 function connectToServer() {
-    client.connect(5001, '127.0.0.1', () => {
+    // client.connect(5001, '127.0.0.1', () => {
+    client.connect(5001, '192.168.204.63', () => {
         console.log('Connected to server');
         isClientConnected = true;
     });
@@ -260,4 +261,85 @@ app.post('/purchase', async (req, res) => {
     } else {
         res.status(500).json({ success: false, message: 'Not connected to server' });
     }
+});
+
+// Route to handle "online" request
+app.get('/online', async (req, res) => {
+    if (isClientConnected) {
+        // Send online request as JSON
+        const onlineData = {
+            command: 'online'
+        };
+        const jsonMessage = JSON.stringify(onlineData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
+    } else {
+        res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
+        return;
+    }
+
+    client.once('data', (data) => {
+        try {
+            const response = JSON.parse(data.toString());
+            res.json(response);
+            console.log(response);
+        } catch (err) {
+            console.error('Failed to parse backend response:', err);
+            res.status(500).json({ error: 'Invalid response from backend' });
+        }
+    });
+
+    client.on('error', (err) => {
+        console.error('Error connecting to backend:', err);
+        res.status(500).json({ error: 'Failed to fetch online status' });
+    });
+});
+
+
+app.get('/online-users', (req, res) => {
+    res.render('online-users'); // This assumes you have an "online-users.ejs" file in your views folder
+});
+
+
+const WebSocket = require('ws');
+
+// Create a WebSocket server to communicate with the browser
+const wss = new WebSocket.Server({ port: 8080 }, () => {
+    console.log('WebSocket server running on ws://localhost:8080');
+});
+
+// Broadcast a message to all connected WebSocket clients
+function broadcastToWebClients(message) {
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    });
+}
+
+// Create a TCP server to listen on port 5003
+const tcpServer = net.createServer((socket) => {
+    socket.on('data', (data) => {
+        const rawData = data.toString();
+
+        // Separate the headers and the body using a double newline
+        const [headers, body] = rawData.split('\r\n\r\n');
+
+        // Log the headers (optional)
+        console.log('Headers:\n', headers);
+
+        // The body contains the actual message
+        const message = body.trim();
+        console.log('Parsed message:', message);
+
+        // const message = data.toString().trim();
+        // console.log('Message received:', message);
+
+        // Relay the message to WebSocket clients
+        broadcastToWebClients(message);
+    });
+});
+
+tcpServer.listen(5003, () => {
+    console.log('TCP server listening for messages on port 5003');
 });
