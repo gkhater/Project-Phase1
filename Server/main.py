@@ -25,13 +25,12 @@ def get_users():
 
 
 def get_products(username): 
-    currency = users.get_currency(DB, username)
     data = { 
         product[0]: {
         "Name": product[1],
         "Count": product[2],
         "Description": product[3],
-        "Price": product[4] * convert("USD", currency),
+        "Price": product[4],
         "Seller": product[5],
         "Rating": product[6],
         "Reviews": product[7],
@@ -196,14 +195,20 @@ def handle_search(client_socket, response):
         results = Products.search_products(DB, query)
         if isinstance(results, list):
 
-            data  = {
-                "Search Results": {
-                    r[0]: {
-                        "Name": r[1],
-                        "Price": r[3],
-                        "Seller": r[4]
+            data = { 
+                "code" : 200, 
+                "products": {
+                    product[0]: {
+                        "Name": product[1],
+                        "Count": product[2],
+                        "Description": product[3],
+                        "Price": product[4],
+                        "Seller": product[5],
+                        "Rating": product[6],
+                        "Reviews": product[7],
+                        "Image": product[8]
                     }
-                    for r in results
+                        for product in results
                 }
             }
         else:
