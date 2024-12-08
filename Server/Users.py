@@ -90,9 +90,8 @@ def deposit(DB, username, amount):
         result = cursor.fetchone()
 
         if result: 
-            current_balance, currency = result[0], result[1]
+            current_balance, currency = int(result[0]), result[1]
             new_balance = current_balance + amount
-            print(new_balance + "YOU ARE NOW POOR")
             cursor.execute("UPDATE users SET balance = ? WHERE username = ?", (new_balance, username))
             conn.commit()
             return {

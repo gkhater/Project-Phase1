@@ -194,7 +194,7 @@
             };
 
             const purchaseButton = document.querySelector('.purchase-button');
-            purchaseButton.onclick = async function(event) {
+                purchaseButton.onclick = async function(event) {
                 event.preventDefault();
                 const selectedProducts = Array.from(document.querySelectorAll('input[name="selectedProducts"]:checked')).map(el => el.value);
                 try {
@@ -249,6 +249,7 @@
                             } else {
                                 alert(`Failed to submit the rating: ${result.message}`);
                             }
+                            fetchAndPopulateProducts();
                         } catch (error) {
                             console.error('Error submitting rating:', error);
                             alert('An error occurred while submitting your rating.');
