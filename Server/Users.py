@@ -3,6 +3,7 @@ import string
 import Messages as msg
 import bcrypt 
 import re
+import onetimepass as otp
 from Rates import convert
 
 # ASCII upper and lower + '_@$&'
@@ -59,7 +60,7 @@ def add_user(DB, name, email, username, password):
         conn.close()
 
 # Authenticate user by checking username and password
-def authenticate(DB, username, password): 
+def authenticate(DB, username, OTP): 
 
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
@@ -71,8 +72,9 @@ def authenticate(DB, username, password):
         result = cursor.fetchone()
 
         if result: 
-            name, key = result
-            if verify_password(key, password):
+            name, secret = result
+            print(f"NAME: {name}, SECRET: {secret}")
+            if verify_password(secret, OTP):
                 return "True", name
 
         return "False", ""
@@ -176,10 +178,12 @@ def set_currency(DB, username, new_currency):
 #These two are self explainatory
 #Uses bcrypt to encrypt passwords
 def hash_password(password): 
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    return password
 
-def verify_password(stored_pass, given_pass): 
-    return bcrypt.checkpw(given_pass.encode('utf-8'), stored_pass.encode('utf-8'))
+def verify_password(secret, OTP): 
+    my_token = otp.get_totp(secret)
+    print(f"EXPECTED: {my_token}")
+    return int(OTP) == int(my_token)
 
 #validates email format using regex
 #I just wanted to flex my newly acquired regex knowledge

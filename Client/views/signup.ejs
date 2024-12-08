@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
     <link rel="stylesheet" href="/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script>
+        // Function to generate a random 16-character secret
+        function generateRandomSecret() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // Base32 characters
+            let secret = '';
+            for (let i = 0; i < 16; i++) {
+                secret += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return secret;
+        }
+
+        // Generate a new secret when the page loads
+        let secret = generateRandomSecret();
+
+        // Function to generate the QR Code dynamically
+        function generateQRCode() {
+            const email = document.getElementById('email').value;
+
+            if (!email) {
+                alert('Please enter a valid email to generate the QR code.');
+                return;
+            }
+
+            const otpAuthUrl = `otpauth://totp/AubProject:${encodeURIComponent(email)}?secret=${secret}&issuer=AUB`;
+
+            console.log(otpAuthUrl)
+            // Generate and display the QR Code
+            QRCode.toCanvas(document.getElementById('qr-code'), otpAuthUrl, function (error) {
+                if (error) {
+                    console.error('Error generating QR Code:', error);
+                    alert('Could not generate QR Code. Please try again.');
+                }
+            });
+
+            // Update the hidden secret field so it can be sent to the server
+            document.getElementById('password').value = secret;
+        }
+    </script>
 </head>
 <body>
     <div class="signup-container">
@@ -16,18 +55,24 @@
             </div>
             <div>
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required oninput="generateQRCode()">
             </div>
             <div>
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required>
             </div>
             <div>
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+                <label for="password">Confirm OTP here: </label>
+                <input type="text" id="confirm" name="confirm" required>
             </div>
+            <input type="hidden" id="password" name="password" value="" required>
             <button type="submit">Sign In</button>
         </form>
+
+        <div>
+            <h3>Your QR Code</h3>
+            <canvas id="qr-code"></canvas>
+        </div>
     </div>
 </body>
 </html>

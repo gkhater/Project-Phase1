@@ -34,11 +34,11 @@ function connectToServer() {
         isClientConnected = false;
     });
 
-    client.on('close', () => {
-        console.log('Connection closed, reconnecting...');
-        isClientConnected = false;
-        setTimeout(connectToServer, 1000); // Attempt to reconnect after 1 second
-    });
+    // client.on('close', () => {
+    //     console.log('Connection closed, reconnecting...');
+    //     isClientConnected = false;
+    //     setTimeout(connectToServer, 1000); // Attempt to reconnect after 1 second
+    // });
 }
 
 // Establish the initial connection
