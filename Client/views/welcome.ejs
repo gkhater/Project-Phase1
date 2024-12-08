@@ -34,6 +34,7 @@
                 cell.textContent = (priceUSD * exchangeRates[selectedCurrency]).toFixed(2) + ' ' + selectedCurrency;
             });
             updateTotal();
+            updateBalance(); // Update balance whenever prices are updated
         }
 
         // Update the total price based on selected items
@@ -57,11 +58,13 @@
             try {
                 const response = await fetch('/balance');
                 const data = await response.json();
-                document.getElementById('balance-display').textContent = `Balance: ${data.balance}`;
+                const convertedBalance = (parseFloat(data.balance) * exchangeRates[selectedCurrency]).toFixed(2);
+                document.getElementById('balance-display').textContent = `Balance: ${convertedBalance} ${selectedCurrency}`;
             } catch (error) {
                 console.error('Error fetching balance:', error);
             }
         }
+
     
         async function fetchAndPopulateProducts() {
             try {
