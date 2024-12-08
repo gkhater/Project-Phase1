@@ -112,7 +112,15 @@ def handle_check(client_socket, response):
         client_socket.sendall(json_data.encode('utf-8'))
 
 def handle_products(client_socket, username):
-    data = get_products(username)
+    prods = get_products(username)
+    balance = users.get_balance(DB, username)["balance"]
+
+    data = {
+        "code": 200, 
+        "balance": balance, 
+        "products": prods
+    }
+
 
     json_data = json.dumps(data, indent=4)
     client_socket.sendall(json_data.encode('utf-8'))

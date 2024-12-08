@@ -72,7 +72,7 @@ def buy(DB, product_id, username):
                 json_data = json.dumps(data, indent=4)
                 return json_data
             
-            Users.deposit(DB, username, -price)
+            Users.deposit(DB, username, int(-price))
             seller = get_seller(DB, product_id)
             Users.deposit(DB, seller, price)
             newcount = count - 1

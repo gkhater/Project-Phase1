@@ -53,11 +53,24 @@
             updatePrices();
         }
 
-        // Fetch and populate products dynamically from the server
+        async function updateBalance() {
+            try {
+                const response = await fetch('/balance');
+                const data = await response.json();
+                document.getElementById('balance-display').textContent = `Balance: ${data.balance}`;
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+            }
+        }
+    
         async function fetchAndPopulateProducts() {
             try {
                 const response = await fetch('/products');
-                const products = await response.json();
+                const { data: products, balance } = await response.json();
+
+                // Update balance display
+                document.getElementById('balance-display').textContent = `Balance: ${balance}`;
+
                 const tableBody = document.querySelector('table tbody');
                 tableBody.innerHTML = ''; // Clear existing rows
 
@@ -191,12 +204,12 @@
                     });
                     const result = await response.json();
                     alert(result.message);
-                    
+
                     addItemModal.style.display = "none";
                     fetchAndPopulateProducts();
-                    
+
                     // Show rating modal after purchase
-                    if (selectedProducts.length > 0) {
+                    if (selectedProducts.length > 0 && result.success == true) {
                         const ratingModal = document.getElementById('ratingModal');
                         const ratingForm = document.getElementById('ratingForm');
                         const closeRatingModal = document.getElementById('closeRatingModal');
@@ -214,8 +227,8 @@
                         };
 
                         ratingForm.onsubmit = async function(event) {
-                        event.preventDefault();
-                        const rating = document.querySelector('input[name="rating"]:checked').value;
+                            event.preventDefault();
+                            const rating = document.querySelector('input[name="rating"]:checked').value;
                         const productID = selectedProducts[0]; // Assuming single product rating; extend logic for multiple if needed.
 
                         try {
@@ -362,16 +375,12 @@
             const searchButton = document.querySelector('.search-button');
             const searchForm = document.getElementById('searchForm');
 
-            // Open the search modal
             searchButton.onclick = () => {
                 searchModal.style.display = "flex";
             };
 
-            // Handle search form submission
             searchForm.onsubmit = async function(event) {
                 event.preventDefault();
-
-    
                 const query = document.getElementById('searchQuery').value.trim();
 
                 if (!query) {
@@ -391,6 +400,7 @@
                     const results = await response.json();
                     const table = searchModal.querySelector('table');
                     const tableBody = table.querySelector('tbody');
+
                     tableBody.innerHTML = ''; // Clear previous rows
 
                     // Check if products exist and iterate over the object
@@ -464,7 +474,12 @@
 </head>
 <body>
     <div class="welcome-container">
-        <h2>Welcome, <%= username %>!</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Welcome, <%= username %>!</h2>
+            <div style="background-color: #f9f9f9; padding: 10px 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);">
+                <span id="balance-display" style="font-size: 16px; font-weight: bold;">Balance: </span>
+            </div>
+        </div>
 
         <!-- Logout button -->
         <form action="/logout" method="POST" style="display: inline-block; margin-bottom: 20px;">

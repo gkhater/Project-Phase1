@@ -201,14 +201,25 @@ app.get('/products', async (req, res) => {
         const jsonMessage = JSON.stringify(productsData);
         client.write(jsonMessage);
         console.log(`Sent: ${jsonMessage}`);
-    }  else {
+    } else {
         res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
     }
 
     client.once('data', (data) => {
-        const response = JSON.parse(data.toString());
-        res.json(response);
-        console.log(response);
+        try {
+            const response = JSON.parse(data.toString());
+            if (response.code === 200) {
+                res.json({
+                    data: response.products,
+                    balance: response.balance, // Assuming the server includes balance in its response
+                });
+            } else {
+                res.status(500).json({ error: 'Failed to fetch products' });
+            }
+        } catch (err) {
+            console.error('Failed to parse backend response:', err);
+            res.status(500).json({ error: 'Invalid response from backend' });
+        }
     });
 
     client.on('error', (err) => {
@@ -249,11 +260,12 @@ app.post('/purchase', async (req, res) => {
 
                 if (response.code === 200) {
                     console.log(`Purchase of product ${productID} successful`);
+                    res.json({success: true, message: "Purchase successful"})
                 } else {
                     console.log(`Failed to purchase product ${productID}`);
+                    res.json({succes: false, message: response.error})
                 }
             }
-            res.json({ success: true, message: 'Purchase initiated for selected items' });
         } catch (error) {
             console.error('Error processing purchase:', error);
             res.status(500).json({ success: false, message: 'Failed to complete purchase' });
@@ -400,6 +412,41 @@ app.post('/rate', (req, res) => {
     } else {
         res.status(500).json({ success: false, message: 'Not connected to server' });
     }
+});
+
+// Route to handle "balance" request
+app.get('/balance', async (req, res) => {
+    if (isClientConnected) {
+        // Send balance request as JSON
+        const balanceData = {
+            command: 'balance'
+        };
+        const jsonMessage = JSON.stringify(balanceData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
+    } else {
+        res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
+        return;
+    }
+
+    client.once('data', (data) => {
+        try {
+            const response = JSON.parse(data.toString());
+            if (response.code === 200) {
+                res.json({ balance: response.balance });
+            } else {
+                res.status(500).json({ error: 'Failed to fetch balance' });
+            }
+        } catch (err) {
+            console.error('Failed to parse backend response:', err);
+            res.status(500).json({ error: 'Invalid response from backend' });
+        }
+    });
+
+    client.on('error', (err) => {
+        console.error('Error connecting to backend:', err);
+        res.status(500).json({ error: 'Failed to fetch balance' });
+    });
 });
 
 
