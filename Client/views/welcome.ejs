@@ -350,6 +350,9 @@
                     const products = results.products;
                     if (products && Object.keys(products).length > 0) {
                         Object.values(products).forEach(product => {
+                            const cleanBase64 = product.Image && product.Image !== '""' ? product.Image.replace(/\s+/g, '').replace(/"/g, '').trim() : '';
+                            const imageSource = cleanBase64 ? `data:image/png;base64,${cleanBase64}` : 'No Image';
+
                             const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td>${product.Name}</td>
@@ -359,7 +362,7 @@
                                 <td>${product.Reviews} Reviews</td>
                                 <td>${product.Price} USD</td>
                                 <td>${product.Description}</td>
-                                <td>${product.Image ? `<img src="${product.Image}" alt="${product.Name}" style="max-width: 100px;">` : 'No Image'}</td>
+                                <td>${cleanBase64 ? `<img src="${imageSource}" alt="${product.Name}" style="max-width: 100px;">` : 'No Image'}</td>
                             `;
                             tableBody.appendChild(row);
                         });
