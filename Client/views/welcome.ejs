@@ -191,8 +191,57 @@
                     });
                     const result = await response.json();
                     alert(result.message);
+                    
                     addItemModal.style.display = "none";
                     fetchAndPopulateProducts();
+                    
+                    // Show rating modal after purchase
+                    if (selectedProducts.length > 0) {
+                        const ratingModal = document.getElementById('ratingModal');
+                        const ratingForm = document.getElementById('ratingForm');
+                        const closeRatingModal = document.getElementById('closeRatingModal');
+
+                        ratingModal.style.display = 'flex';
+
+                        closeRatingModal.onclick = () => {
+                            ratingModal.style.display = 'none';
+                        };
+
+                        window.onclick = (event) => {
+                            if (event.target === ratingModal) {
+                                ratingModal.style.display = 'none';
+                            }
+                        };
+
+                        ratingForm.onsubmit = async function(event) {
+                        event.preventDefault();
+                        const rating = document.querySelector('input[name="rating"]:checked').value;
+                        const productID = selectedProducts[0]; // Assuming single product rating; extend logic for multiple if needed.
+
+                        try {
+                            const response = await fetch('/rate', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ product_id: productID, rating: rating })
+                            });
+
+                            const result = await response.json();
+                            if (result.success) {
+                                alert(`You rated the product: ${rating} stars. Server acknowledged.`);
+                            } else {
+                                alert(`Failed to submit the rating: ${result.message}`);
+                            }
+                        } catch (error) {
+                            console.error('Error submitting rating:', error);
+                            alert('An error occurred while submitting your rating.');
+                        } finally {
+                            ratingModal.style.display = 'none';
+                        }
+                    };
+
+                    }
                 } catch (error) {
                     console.error('Error processing purchase:', error);
                 }
@@ -322,7 +371,7 @@
             searchForm.onsubmit = async function(event) {
                 event.preventDefault();
 
-                // Fetch the input value correctly
+    
                 const query = document.getElementById('searchQuery').value.trim();
 
                 if (!query) {
@@ -340,8 +389,6 @@
                     });
 
                     const results = await response.json();
-
-                    // Populate the search results in the modal
                     const table = searchModal.querySelector('table');
                     const tableBody = table.querySelector('tbody');
                     tableBody.innerHTML = ''; // Clear previous rows
@@ -377,13 +424,11 @@
                 }
             };
 
-            // Close the search modal when clicking outside of it
             window.onclick = function(event) {
                 if (event.target === searchModal) {
                     searchModal.style.display = "none";
                 }
             };
-
         });
 
         // Helper function to convert a file to Base64
@@ -397,12 +442,10 @@
         }
 
         // Connect to the WebSocket server
-        // Connect to the WebSocket server
         const socket = new WebSocket('ws://localhost:8080');
 
         // Listen for messages from the server
         socket.onmessage = function(event) {
-            // Show an alert when a message is received
             alert(`Message received: ${event.data}`);
         };
 
@@ -551,6 +594,25 @@
                 </table>
             </div>
         </div>
-        
+
+        <!-- Rating Modal -->
+        <div id="ratingModal" class="modal">
+            <div class="modal-content">
+                <span id="closeRatingModal" class="close">&times;</span>
+                <h2>Rate Your Product</h2>
+                <form id="ratingForm">
+                    <label>Rate the product:</label><br>
+                    <div style="display: flex; gap: 10px; margin: 10px 0; align-items: center;">
+                        <label><input type="radio" id="rate1" name="rating" value="1" required> 1</label>
+                        <label><input type="radio" id="rate2" name="rating" value="2"> 2</label>
+                        <label><input type="radio" id="rate3" name="rating" value="3"> 3</label>
+                        <label><input type="radio" id="rate4" name="rating" value="4"> 4</label>
+                        <label><input type="radio" id="rate5" name="rating" value="5"> 5</label>
+                    </div>
+                    <button type="submit" class="button submit-button">Submit Rating</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

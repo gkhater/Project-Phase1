@@ -376,6 +376,32 @@ app.post('/search', (req, res) => {
     }
 });
 
+// Endpoint to handle rating a product
+app.post('/rate', (req, res) => {
+    const { product_id, rating } = req.body;
+
+    if (isClientConnected) {
+        // Send rate command to server
+        const rateData = {
+            command: `rate ${product_id} ${rating}`
+        };
+        const jsonMessage = JSON.stringify(rateData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
+
+        client.once('data', (data) => {
+            const responseData = JSON.parse(data.toString());
+            if (responseData.code === 200) {
+                res.json({ success: true, message: 'Rating submitted successfully' });
+            } else {
+                res.json({ success: false, message: 'Failed to submit rating' });
+            }
+        });
+    } else {
+        res.status(500).json({ success: false, message: 'Not connected to server' });
+    }
+});
+
 
 tcpServer.listen(5003, () => {
     console.log('TCP server listening for messages on port 5003');
