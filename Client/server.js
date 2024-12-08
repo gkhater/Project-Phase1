@@ -340,6 +340,43 @@ const tcpServer = net.createServer((socket) => {
     });
 });
 
+// Add a route to handle the search feature
+app.post('/search', (req, res) => {
+    const { query } = req.body;
+
+    if (isClientConnected) {
+        // Send search command with the query to the server
+        let searchData = {
+            command: `search ${query}`
+        };
+        let jsonMessage = JSON.stringify(searchData);
+        client.write(jsonMessage);
+        console.log(`Sent: ${jsonMessage}`);
+
+        client.once('data', (data) => {
+            try {
+                const response = JSON.parse(data.toString());
+                if (response.code === 200) {
+                    res.json({success : true, products : response.products});
+                } else {
+                    res.status(500).json({ success: false, message: 'Search failed' });
+                }
+            } catch (error) {
+                console.error('Error parsing search response:', error);
+                res.status(500).json({ success: false, message: 'Invalid response from server' });
+            }
+        });
+
+        client.on('error', (err) => {
+            console.error('Error connecting to backend:', err);
+            res.status(500).json({ success: false, message: 'Backend connection error' });
+        });
+    } else {
+        res.status(500).json({ success: false, message: 'Not connected to server' });
+    }
+});
+
+
 tcpServer.listen(5003, () => {
     console.log('TCP server listening for messages on port 5003');
 });

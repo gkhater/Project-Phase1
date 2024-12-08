@@ -190,3 +190,11 @@ label {
 #onlineUsersList .input {
     width: 100%;
 }
+
+#searchModal .modal-content {
+  width: 90%; /* Set a wider modal for search */
+  max-width: 800px; /* Ensure it doesn't exceed this width */
+  height: 80%; /* Taller modal for more content */
+  overflow-y: auto; /* Add scrolling for large results */
+  text-align: left;
+}

@@ -237,7 +237,7 @@ def search_products(DB, query):
 
     try:
         query = f"%{query}%"
-        cursor.execute('SELECT id, name, description, price, seller, rating, rating_count FROM products WHERE (name LIKE ? OR description LIKE ?) AND count > 0',
+        cursor.execute('SELECT id, name, count, description, price, seller, rating, rating_count, image FROM products WHERE (name LIKE ? OR description LIKE ?) AND count > 0',
                        (query, query))
         results = cursor.fetchall()
         if results:

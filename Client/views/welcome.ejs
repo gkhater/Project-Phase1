@@ -262,56 +262,126 @@
             }
 
             // Placeholder action for the "Send Message" button
-//
-sendMessageButton.onclick = () => {
-    // Get the selected user's radio button
-    const selectedRadio = document.querySelector('input[name="selectedUser"]:checked');
-    const username = "<%= username %>: "; // Embed the EJS value as a JavaScript variable
-    const message = username + messageBox.value;
+            sendMessageButton.onclick = () => {
+                // Get the selected user's radio button
+                const selectedRadio = document.querySelector('input[name="selectedUser"]:checked');
+                const username = "<%= username %>: "; // Embed the EJS value as a JavaScript variable
+                const message = username + messageBox.value;
 
-    if (!selectedRadio) {
-        alert('Please select a user.');
-        return;
-    }
+                if (!selectedRadio) {
+                    alert('Please select a user.');
+                    return;
+                }
 
-    if (!message) {
-        alert('Please enter a message.');
-        return;
-    }
+                if (!message) {
+                    alert('Please enter a message.');
+                    return;
+                }
 
-    // Extract IP and port from the selected radio button's data attributes
-    const ip = selectedRadio.getAttribute('data-ip');
-    const port = selectedRadio.getAttribute('data-port');
+                // Extract IP and port from the selected radio button's data attributes
+                const ip = selectedRadio.getAttribute('data-ip');
+                const port = selectedRadio.getAttribute('data-port');
 
-    if (!ip || !port) {
-        alert('User information is incomplete.');
-        return;
-    }
+                if (!ip || !port) {
+                    alert('User information is incomplete.');
+                    return;
+                }
 
-    // Send the message to the user's IP and port
-    fetch(`http://${ip}:${port}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'text/plain', // Plain text to avoid JSON-related overhead
-        },
-        body: message, // Send the raw message directly
-    })
-        .then((response) => {
-            if (response.ok) {
-                alert(`Message sent to ${selectedRadio.value}: "${message}"`);
-            } else {
-                alert(`Failed to send message to ${selectedRadio.value}.`);
-            }
-        })
-        .catch((error) => {
-            console.error('Error sending message:', error);
-            alert(`Error sending message to ${selectedRadio.value}.`);
+                // Send the message to the user's IP and port
+                fetch(`http://${ip}:${port}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain', // Plain text to avoid JSON-related overhead
+                    },
+                    body: message, // Send the raw message directly
+                })
+                    .then((response) => {
+                        if (response.ok) {
+                            alert(`Message sent to ${selectedRadio.value}: "${message}"`);
+                        } else {
+                            alert(`Failed to send message to ${selectedRadio.value}.`);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error sending message:', error);
+                        alert(`Error sending message to ${selectedRadio.value}.`);
+                    });
+            };
+
+            // Handle Search Modal functionality
+            const searchModal = document.getElementById('searchModal');
+            const searchButton = document.querySelector('.search-button');
+            const searchForm = document.getElementById('searchForm');
+
+            // Open the search modal
+            searchButton.onclick = () => {
+                searchModal.style.display = "flex";
+            };
+
+            // Handle search form submission
+            searchForm.onsubmit = async function(event) {
+                event.preventDefault();
+
+                // Fetch the input value correctly
+                const query = document.getElementById('searchQuery').value.trim();
+
+                if (!query) {
+                    alert('Please enter a valid search term.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ query })
+                    });
+
+                    const results = await response.json();
+
+                    // Populate the search results in the modal
+                    const table = searchModal.querySelector('table');
+                    const tableBody = table.querySelector('tbody');
+                    tableBody.innerHTML = ''; // Clear previous rows
+
+                    // Check if products exist and iterate over the object
+                    const products = results.products;
+                    if (products && Object.keys(products).length > 0) {
+                        Object.values(products).forEach(product => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${product.Name}</td>
+                                <td>${product.Seller}</td>
+                                <td>${product.Count}</td>
+                                <td>${product.Rating} / 5</td>
+                                <td>${product.Reviews} Reviews</td>
+                                <td>${product.Price} USD</td>
+                                <td>${product.Description}</td>
+                                <td>${product.Image ? `<img src="${product.Image}" alt="${product.Name}" style="max-width: 100px;">` : 'No Image'}</td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                        table.style.display = "table";
+                    } else {
+                        alert('No products found matching your query.');
+                        table.style.display = "none";
+                    }
+                } catch (error) {
+                    console.error('Error during search:', error);
+                    alert('An error occurred while searching.');
+                }
+            };
+
+            // Close the search modal when clicking outside of it
+            window.onclick = function(event) {
+                if (event.target === searchModal) {
+                    searchModal.style.display = "none";
+                }
+            };
+
         });
-};
-
-//
-        });
-
 
         // Helper function to convert a file to Base64
         function toBase64(file) {
@@ -323,30 +393,27 @@ sendMessageButton.onclick = () => {
             });
         }
 
-        // 
-            // Connect to the WebSocket server
-            const socket = new WebSocket('ws://localhost:8080');
+        // Connect to the WebSocket server
+        // Connect to the WebSocket server
+        const socket = new WebSocket('ws://localhost:8080');
 
-            // Listen for messages from the server
-            socket.onmessage = function(event) {
-                // Show an alert when a message is received
-                alert(`Message received: ${event.data}`);
-            };
+        // Listen for messages from the server
+        socket.onmessage = function(event) {
+            // Show an alert when a message is received
+            alert(`Message received: ${event.data}`);
+        };
 
-            socket.onopen = function() {
-                console.log('Connected to WebSocket server');
-            };
+        socket.onopen = function() {
+            console.log('Connected to WebSocket server');
+        };
 
-            socket.onerror = function(error) {
-                console.error('WebSocket error:', error);
-            };
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
 
-            socket.onclose = function() {
-                console.log('WebSocket connection closed');
-            };
-
-        // 
-        
+        socket.onclose = function() {
+            console.log('WebSocket connection closed');
+        };
     </script>
 </head>
 <body>
@@ -396,6 +463,7 @@ sendMessageButton.onclick = () => {
                 <button type="button" id="addItemBtn" class="button add-item-button">Add Item</button>
                 <button type="button" id="openDepositModal" class="button deposit-button">Deposit</button>
                 <button type="button" id="openOnlineUsersModal" class="button online-users-button">View Online Users</button>
+                <button type="button" class="button search-button">Search Product</button>
             </div>
         </form>
 
@@ -432,6 +500,7 @@ sendMessageButton.onclick = () => {
                 </form>
             </div>
         </div>
+
         <!-- Online Users Modal -->
         <div id="onlineUsersModal" class="modal">
             <div class="modal-content">
@@ -450,6 +519,35 @@ sendMessageButton.onclick = () => {
             </div>
         </div>
 
-
-    </div>
+        <!-- Search Modal -->
+        <div id="searchModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="document.getElementById('searchModal').style.display='none'">&times;</span>
+                <h2>Search Products</h2>
+                <form id="searchForm">
+                    <label for="searchQuery">Product Name or Description:</label>
+                    <input type="text" id="searchQuery" name="searchQuery" required>
+                    <button type="submit">Search</button>
+                </form>
+                <table style="display:none; margin-top: 20px; width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Seller</th>
+                            <th>Available Items</th>
+                            <th>Rating</th>
+                            <th>Reviews</th>
+                            <th>Price</th>
+                            <th>Description</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Search results will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
 </body>
+</html>
