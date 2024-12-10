@@ -23,8 +23,8 @@ let isClientConnected = false;
 
 // Connect to the server and keep the connection open
 function connectToServer() {
-    // client.connect(5001, '127.0.0.1', () => {
-    client.connect(5001, '192.168.204.63', () => {
+    client.connect(5001, '127.0.0.1', () => {
+    // client.connect(5001, '192.168.204.63', () => {
         console.log('Connected to server');
         isClientConnected = true;
     });
