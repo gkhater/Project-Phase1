@@ -63,7 +63,6 @@ def handle_logout(client_socket, username):
     if username in online_users and online_users[username]["socket"] == client_socket: 
         del online_users[username]
     print(msg.MESSAGES['USER_DISCONNECTED'].format(username=username))
-    client_socket.close()
 
 def handle_text(client_socket, username, response):
     if len(response) > 1:
@@ -345,6 +344,7 @@ def handle_client(client_socket, username, name):
             if handle_command(client_socket, username, command) == "LOGOUT":
                 break
     finally:
+        print("logging out...")
         handle_logout(client_socket, username)
 
 def send_Message(username, destination, message): 
@@ -397,7 +397,6 @@ def signOn_client(client_socket, client_address):
                 done, result = users.add_user(DB, name, email, username, password)
                 client_socket.send(result.encode())
                 client_socket.send(done.encode())
-                break
 
             elif choice == 'L': 
                 # Extract required fields from the received JSON data
@@ -431,7 +430,6 @@ def signOn_client(client_socket, client_address):
                     }
 
                     handle_client(client_socket, username, realname)
-                    break
 
             else:
                 client_socket.send(msg.MESSAGES["INVALID_CHOICE"].encode())

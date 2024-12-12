@@ -34,11 +34,11 @@ function connectToServer() {
         isClientConnected = false;
     });
 
-    // client.on('close', () => {
-    //     console.log('Connection closed, reconnecting...');
-    //     isClientConnected = false;
-    //     setTimeout(connectToServer, 1000); // Attempt to reconnect after 1 second
-    // });
+    client.on('close', () => {
+        console.log('Connection closed, reconnecting...');
+        isClientConnected = false;
+        setTimeout(connectToServer, 1000); // Attempt to reconnect after 1 second
+    });
 }
 
 // Establish the initial connection
@@ -117,21 +117,23 @@ app.post('/signin', (req, res) => {
 app.post('/logout', (req, res) => {
     if (isClientConnected) {
         // Send logout command as JSON
+        res.redirect('/');
         const logoutData = {
             command: 'logout'
         };
         const jsonMessage = JSON.stringify(logoutData);
         client.write(jsonMessage);
-        res.redirect('/');  
+          
     } else {
         res.status(500).render('response', { message: 'Error', data: 'Not connected to server' });
     }
 
     // Handle data received from the server
-    client.once('data', (data) => {
-        console.log('Received from server:', data.toString());
-        res.redirect('/');  // Redirect to home page after logout
-    });
+    // client.once('data', (data) => {
+    //     client.removeAllListeners('data'); 
+    //     // console.log('Received from server:', data.toString());
+    //     // res.redirect('/');  // Redirect to home page after logout
+    // });
 });
 
 // Start the server
