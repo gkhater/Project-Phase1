@@ -344,7 +344,6 @@ def handle_client(client_socket, username, name):
             if handle_command(client_socket, username, command) == "LOGOUT":
                 break
     finally:
-        print("logging out...")
         handle_logout(client_socket, username)
 
 def send_Message(username, destination, message): 
